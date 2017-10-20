@@ -1,0 +1,20 @@
+{
+  "name": "GoozeUser",
+  "base": "User",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+  },
+  "mixins": {
+    "TimeStamp" : {
+      "validateUpsert": true,
+      "required" : true
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {}
+}

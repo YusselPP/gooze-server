@@ -1,0 +1,6 @@
+{
+  "mongoDs": {
+    "user": "${MONGO_USER}",
+    "password": "${MONGO_PWD}"
+  }
+}
