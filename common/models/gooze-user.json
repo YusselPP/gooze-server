@@ -6,6 +6,40 @@
     "validateUpsert": true
   },
   "properties": {
+    "username": {
+      "type": "string",
+      "required": true
+    },
+    "registerCode": "string",
+    "invitedBy": "string",
+    "birthday": "date",
+    "gender": {
+      "type": "string",
+      "default": null
+    },
+    "weight": "number",
+    "height": "number",
+    "languages": ["string"],
+    "interestedIn": ["string"],
+    "photos": "array",
+    "origin": "string",
+    "phrase": "string",
+    "mode": {
+      "type": "string",
+      "required": true,
+      "default": "client"
+    },
+    "status": {
+      "type": "string",
+      "required": true,
+      "default": "unavailable"
+    },
+    "loggedIn": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "currentLocation": "GeoPoint"
   },
   "mixins": {
     "TimeStamp" : {

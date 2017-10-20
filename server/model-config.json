@@ -19,7 +19,7 @@
     "public": false
   },
   "AccessToken": {
-    "dataSource": "db",
+    "dataSource": "mongoDs",
     "public": false
   },
   "ACL": {
