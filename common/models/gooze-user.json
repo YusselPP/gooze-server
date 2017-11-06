@@ -5,25 +5,55 @@
   "options": {
     "validateUpsert": true
   },
+  "mixins": {
+    "TimeStamp": {
+      "validateUpsert": true,
+      "required": true
+    }
+  },
   "properties": {
     "username": {
       "type": "string",
       "required": true
     },
-    "registerCode": "string",
-    "invitedBy": "string",
-    "birthday": "date",
+    "registerCode": {
+      "type": "string"
+    },
+    "invitedBy": {
+      "type": "string"
+    },
+    "birthday": {
+      "type": "date"
+    },
     "gender": {
       "type": "string",
       "default": null
     },
-    "weight": "number",
-    "height": "number",
-    "languages": ["string"],
-    "interestedIn": ["string"],
-    "photos": "array",
-    "origin": "string",
-    "phrase": "string",
+    "weight": {
+      "type": "number"
+    },
+    "height": {
+      "type": "number"
+    },
+    "languages": {
+      "type": [
+        "string"
+      ]
+    },
+    "interestedIn": {
+      "type": [
+        "string"
+      ]
+    },
+    "photos": {
+      "type": "array"
+    },
+    "origin": {
+      "type": "string"
+    },
+    "phrase": {
+      "type": "string"
+    },
     "mode": {
       "type": "string",
       "required": true,
@@ -39,12 +69,8 @@
       "required": true,
       "default": false
     },
-    "currentLocation": "GeoPoint"
-  },
-  "mixins": {
-    "TimeStamp" : {
-      "validateUpsert": true,
-      "required" : true
+    "currentLocation": {
+      "type": "GeoPoint"
     }
   },
   "validations": [],
