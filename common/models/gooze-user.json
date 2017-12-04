@@ -71,10 +71,20 @@
     },
     "currentLocation": {
       "type": "GeoPoint"
+    },
+    "activeUntil": {
+      "type": "date"
     }
   },
   "validations": [],
   "relations": {},
-  "acls": [],
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "findByLocation"
+    }
+  ],
   "methods": {}
 }
