@@ -45,6 +45,22 @@
         "string"
       ]
     },
+    "profilePic": {
+      "type": {
+        "container": "string",
+        "url": "string",
+        "name": "string",
+        "blocked": "boolean"
+      }
+    },
+    "searchPic": {
+      "type": {
+        "container": "string",
+        "url": "string",
+        "name": "string",
+        "blocked": "boolean"
+      }
+    },
     "photos": {
       "type": "array"
     },
@@ -84,6 +100,12 @@
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "property": "findByLocation"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "publicProfile"
     }
   ],
   "methods": {}

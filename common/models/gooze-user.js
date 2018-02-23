@@ -24,7 +24,7 @@ module.exports = function(Goozeuser) {
       fields: {
         id: true,
         username: true,
-        photos: true,
+        searchPic: true,
         currentLocation: true
       },
       limit: limit || 5
@@ -41,5 +41,63 @@ module.exports = function(Goozeuser) {
       { arg: 'limit', type: 'number', http: { source: 'query' } }
     ],
     returns: { type: [], root: true }
+  });
+
+  Goozeuser.publicProfile = function(id, cb) {
+    Goozeuser.findById(id, {
+      fields: {
+        username: true,
+        birthday: true,
+        gender: true,
+        weight: true,
+        height: true,
+        origin: true,
+        phrase: true,
+        languages: true,
+        interestedIn: true,
+
+        profilePic: true,
+        photos: true
+      }
+    }, function(err, user) {
+      cb(err, user);
+    });
+  };
+
+  Goozeuser.remoteMethod('publicProfile', {
+    http: {
+      path: '/:id/publicProfile',
+      verb: 'get'
+    },
+    accepts: [
+      { arg: 'id', type: 'string', required: true }
+    ],
+    returns: {
+      type: {
+        username: 'string',
+        birthday: 'date',
+        gender: 'string',
+        weight: 'number',
+        height: 'number',
+        origin: 'string',
+        phrase: 'string',
+        languages: ['string'],
+        interestedIn: ['string'],
+
+        profilePic: {
+          'container': 'string',
+          'url': 'string',
+          'name': 'string',
+          'blocked': 'boolean'
+        },
+        photos: [{
+          'container': 'string',
+          'url': 'string',
+          'name': 'string',
+          'blocked': 'boolean'
+        }]
+      },
+      root: true
+    }
   });
 };
