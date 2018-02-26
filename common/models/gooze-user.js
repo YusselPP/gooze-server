@@ -100,4 +100,20 @@ module.exports = function(Goozeuser) {
       root: true
     }
   });
+
+
+  // email case insensitive
+  Goozeuser.settings.caseSensitiveEmail = false;
+
+  // username case insensitive
+  Goozeuser.setter.username = function(value) {
+    this.$username = value.toLowerCase();
+  };
+
+  Goozeuser.observe('access', function normalizeUsernameCase(ctx, next) {
+    if (ctx.query.where && ctx.query.where.username && typeof(ctx.query.where.username) === 'string') {
+      ctx.query.where.username = ctx.query.where.username.toLowerCase();
+    }
+    next();
+  });
 };
