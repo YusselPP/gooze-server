@@ -9,7 +9,8 @@ module.exports = function(Goozeuser) {
   Goozeuser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
   Goozeuser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
-  Goozeuser.findByLocation = function(location, maxDistance, limit, cb) {
+  Goozeuser.findByLocation = function(location, maxDistance, limit, options, cb) {
+    console.log(options);
     Goozeuser.find({
       where: {
         currentLocation: {
@@ -38,7 +39,8 @@ module.exports = function(Goozeuser) {
     accepts: [
       { arg: 'location', type: 'GeoPoint', required: true, http: { source: 'query' } },
       { arg: 'maxDistance', type: 'number', http: { source: 'query' } },
-      { arg: 'limit', type: 'number', http: { source: 'query' } }
+      { arg: 'limit', type: 'number', http: { source: 'query' } },
+      { arg: 'options', type: 'object', http: 'optionsFromRequest' }
     ],
     returns: { type: [], root: true }
   });
@@ -55,6 +57,12 @@ module.exports = function(Goozeuser) {
         phrase: true,
         languages: true,
         interestedIn: true,
+
+        imagesRating: true,
+        complianceRating: true,
+        dateQualityRating: true,
+        dateRating: true,
+        goozeRating: true,
 
         profilePic: true,
         photos: true
@@ -84,6 +92,12 @@ module.exports = function(Goozeuser) {
         languages: ['string'],
         interestedIn: ['string'],
 
+        imagesRating: 'number',
+        complianceRating: 'number',
+        dateQualityRating: 'number',
+        dateRating: 'number',
+        goozeRating: 'number',
+
         profilePic: {
           'container': 'string',
           'url': 'string',
@@ -101,6 +115,27 @@ module.exports = function(Goozeuser) {
     }
   });
 
+  var userLogin = Goozeuser.login;
+  Goozeuser.login = function(credentials, include, fn) {
+    userLogin.call(Goozeuser, credentials, include ? 'user' : undefined, function (err, token) {
+
+      if (err) {
+        if (err.code = 'LOGIN_FAILED') {
+
+          credentials.username = credentials.email;
+          delete credentials.email;
+
+          userLogin.call(Goozeuser, credentials, include ? 'user' : undefined, fn);
+          return;
+        }
+
+        fn(err);
+        return;
+      }
+
+      fn(err, token);
+    });
+  };
 
   // email case insensitive
   Goozeuser.settings.caseSensitiveEmail = false;

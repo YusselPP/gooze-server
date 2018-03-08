@@ -90,6 +90,21 @@
     },
     "activeUntil": {
       "type": "date"
+    },
+    "imagesRating": {
+      "type": "number"
+    },
+    "complianceRating": {
+      "type": "number"
+    },
+    "dateQualityRating": {
+      "type": "number"
+    },
+    "dateRating": {
+      "type": "number"
+    },
+    "goozeRating": {
+      "type": "number"
     }
   },
   "validations": [],
