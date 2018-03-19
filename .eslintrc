@@ -1,3 +1,7 @@
 {
-  "extends": "loopback"
+  "extends": "loopback",
+  "rules": {
+    "comma-dangle": ["error", "only-multiline"],
+    "max-len": ["error", { "code": 120 }]
+  }
 }
