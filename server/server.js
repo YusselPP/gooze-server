@@ -2,6 +2,8 @@
 
 var loopback = require('loopback');
 var boot = require('loopback-boot');
+var SocketService = require('./socket/socket.service');
+
 
 var app = module.exports = loopback();
 
@@ -24,6 +26,10 @@ boot(app, __dirname, function(err) {
   if (err) throw err;
 
   // start the server if `$ node server.js`
-  if (require.main === module)
-    app.start();
+  if (require.main === module) {
+    // Comment this app.start line and add following lines
+    var webServer = app.start();
+
+    SocketService.createSocketChannels(webServer, app);
+  }
 });

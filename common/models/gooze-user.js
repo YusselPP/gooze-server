@@ -1,17 +1,19 @@
 'use strict';
 
+var debug = require('debug')('gooze:gooze-user');
+
 /**
  *
- * @param Goozeuser{Validatable}
+ * @param GoozeUser{Validatable}
  */
-module.exports = function(Goozeuser) {
-  Goozeuser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
-  Goozeuser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
-  Goozeuser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
+module.exports = function(GoozeUser) {
+  GoozeUser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
+  GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
+  GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
-  Goozeuser.findByLocation = function(location, maxDistance, limit, options, cb) {
-    console.log(options);
-    Goozeuser.find({
+  GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
+    debug(options);
+    GoozeUser.find({
       where: {
         currentLocation: {
           near: location,
@@ -34,20 +36,26 @@ module.exports = function(Goozeuser) {
     });
   };
 
-  Goozeuser.remoteMethod('findByLocation', {
-    http: { verb: 'get' },
+  GoozeUser.remoteMethod('findByLocation', {
+    http: {verb: 'get'},
     accepts: [
-      { arg: 'location', type: 'GeoPoint', required: true, http: { source: 'query' } },
-      { arg: 'maxDistance', type: 'number', http: { source: 'query' } },
-      { arg: 'limit', type: 'number', http: { source: 'query' } },
-      { arg: 'options', type: 'object', http: 'optionsFromRequest' }
+      {
+        arg: 'location',
+        type: 'GeoPoint',
+        required: true,
+        http: {source: 'query'}
+      },
+      {arg: 'maxDistance', type: 'number', http: {source: 'query'}},
+      {arg: 'limit', type: 'number', http: {source: 'query'}},
+      {arg: 'options', type: 'object', http: 'optionsFromRequest'}
     ],
-    returns: { type: [], root: true }
+    returns: {type: [], root: true}
   });
 
-  Goozeuser.publicProfile = function(id, cb) {
-    Goozeuser.findById(id, {
+  GoozeUser.publicProfile = function(id, cb) {
+    GoozeUser.findById(id, {
       fields: {
+        id: true,
         username: true,
         birthday: true,
         gender: true,
@@ -72,7 +80,7 @@ module.exports = function(Goozeuser) {
     });
   };
 
-  Goozeuser.remoteMethod('publicProfile', {
+  GoozeUser.remoteMethod('publicProfile', {
     http: {
       path: '/:id/publicProfile',
       verb: 'get'
@@ -115,9 +123,9 @@ module.exports = function(Goozeuser) {
     }
   });
 
-  var userLogin = Goozeuser.login;
-  Goozeuser.login = function(credentials, include, fn) {
-    userLogin.call(Goozeuser, credentials, include ? 'user' : undefined, function (err, token) {
+  var userLogin = GoozeUser.login;
+  GoozeUser.login = function(credentials, include, fn) {
+    userLogin.call(GoozeUser, credentials, include ? 'user' : undefined, function (err, token) {
 
       if (err) {
         if (err.code = 'LOGIN_FAILED') {
@@ -125,7 +133,7 @@ module.exports = function(Goozeuser) {
           credentials.username = credentials.email;
           delete credentials.email;
 
-          userLogin.call(Goozeuser, credentials, include ? 'user' : undefined, fn);
+          userLogin.call(GoozeUser, credentials, include ? 'user' : undefined, fn);
           return;
         }
 
@@ -138,14 +146,14 @@ module.exports = function(Goozeuser) {
   };
 
   // email case insensitive
-  Goozeuser.settings.caseSensitiveEmail = false;
+  GoozeUser.settings.caseSensitiveEmail = false;
 
   // username case insensitive
-  Goozeuser.setter.username = function(value) {
+  GoozeUser.setter.username = function(value) {
     this.$username = value.toLowerCase();
   };
 
-  Goozeuser.observe('access', function normalizeUsernameCase(ctx, next) {
+  GoozeUser.observe('access', function normalizeUsernameCase(ctx, next) {
     if (ctx.query.where && ctx.query.where.username && typeof(ctx.query.where.username) === 'string') {
       ctx.query.where.username = ctx.query.where.username.toLowerCase();
     }
