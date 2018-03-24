@@ -38,7 +38,7 @@ function createSocketChannels(webServer, app) {
 
     function handleAuthentication(socket, data, callback) {
       var error;
-      var AccessTokenModel = app.models.AccessToken;
+      var GoozeAccessTokenModel = app.models.GoozeAccessToken;
       var credentials = data[0]; // get credentials sent by the client
 
       if (!isValidCredentials(credentials)) {
@@ -54,14 +54,14 @@ function createSocketChannels(webServer, app) {
 
       channelDebug('Authenticating with credentials: ' + JSON.stringify(credentials));
 
-      AccessTokenModel.find({
+      GoozeAccessTokenModel.find({
         where: {
           userId: credentials.userId,
           id: credentials.id
         }
       }, function(err, tokenDetails) {
         if (err) {
-          channelDebug('Error querying AccessToken');
+          channelDebug('Error querying GoozeAccessToken');
           callback(err);
           return;
         }
@@ -88,7 +88,7 @@ function createSocketChannels(webServer, app) {
 
           callback(null, true);
         } else {
-          channelDebug('AccessToken not found with provided credentials.');
+          channelDebug('GoozeAccessToken not found with provided credentials.');
           callback(null, false);
         }
       });
