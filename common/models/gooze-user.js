@@ -4,7 +4,7 @@ var debug = require('debug')('gooze:gooze-user');
 
 /**
  *
- * @param GoozeUser{Validatable}
+ * @param GoozeUser{GoozeUser}
  */
 module.exports = function(GoozeUser) {
   GoozeUser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
@@ -86,7 +86,7 @@ module.exports = function(GoozeUser) {
       verb: 'get'
     },
     accepts: [
-      { arg: 'id', type: 'string', required: true }
+      {arg: 'id', type: 'string', required: true}
     ],
     returns: {
       type: {
@@ -125,11 +125,9 @@ module.exports = function(GoozeUser) {
 
   var userLogin = GoozeUser.login;
   GoozeUser.login = function(credentials, include, fn) {
-    userLogin.call(GoozeUser, credentials, include ? 'user' : undefined, function (err, token) {
-
+    userLogin.call(GoozeUser, credentials, include ? 'user' : undefined, function(err, token) {
       if (err) {
-        if (err.code = 'LOGIN_FAILED') {
-
+        if (err.code === 'LOGIN_FAILED') {
           credentials.username = credentials.email;
           delete credentials.email;
 
@@ -144,6 +142,20 @@ module.exports = function(GoozeUser) {
       fn(err, token);
     });
   };
+
+  GoozeUser.afterRemote('login', function(context, token, next) {
+    debug('after login hook called. Removing expired access tokens');
+
+    GoozeUser.app.models.GoozeAccessToken.destroyAll({
+      expires: {
+        lt: new Date()
+      }
+    }, function(err, tokens) {
+      debug('err: ' + (err && err.message) + ', info: ' + JSON.stringify(tokens));
+    });
+
+    next();
+  });
 
   // email case insensitive
   GoozeUser.settings.caseSensitiveEmail = false;

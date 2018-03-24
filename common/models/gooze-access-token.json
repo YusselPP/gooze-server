@@ -1,0 +1,23 @@
+{
+  "name": "GoozeAccessToken",
+  "base": "AccessToken",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "expires": {
+      "type": "date"
+    }
+  },
+  "validations": [],
+  "relations": {
+    "user": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "userId"
+    }
+  },
+  "acls": [],
+  "methods": {}
+}

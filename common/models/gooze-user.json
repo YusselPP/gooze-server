@@ -108,7 +108,16 @@
     }
   },
   "validations": [],
-  "relations": {},
+  "relations": {
+    "accessTokens": {
+      "type": "hasMany",
+      "model": "GoozeAccessToken",
+      "foreignKey": "userId",
+      "options": {
+        "disableInclude": true
+      }
+    }
+  },
   "acls": [
     {
       "principalType": "ROLE",

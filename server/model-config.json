@@ -41,6 +41,10 @@
     "dataSource": "mongoDs",
     "public": true
   },
+  "GoozeAccessToken": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
   "container": {
     "dataSource": "storage",
     "public": true
