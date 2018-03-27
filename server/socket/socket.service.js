@@ -32,6 +32,14 @@ function createSocketChannels(webServer, app) {
       postAuthenticate: handlePostAuthentication
     };
 
+    channel.on('connection', function(socket) {
+      channelDebug('Socket connected [id=' + socket.id + ']');
+
+      socket.on('disconnect', function() {
+        channelDebug('Socket disconnected [id=' + socket.id + ']');
+      });
+    });
+
     socketIOAuth(channel, authConfig);
 
     return channel;

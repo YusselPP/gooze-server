@@ -11,6 +11,8 @@ module.exports = function(GoozeUser) {
   GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
   GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
+  // TODO: filter current user
+  // TODO: add optional filter to show bad rate users
   GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
     debug(options);
     GoozeUser.find({
