@@ -1,0 +1,42 @@
+{
+  "name": "DateRequest",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "validateUpsert": true,
+      "required": true
+    },
+    "SoftDelete" : true
+  },
+  "properties": {
+    "status": {
+      "type": "string",
+      "required": true,
+      "default": "sent"
+    }
+  },
+  "relations": {
+    "sender": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "senderId"
+    },
+    "recipient": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "recipientId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    }
+  ],
+  "methods": {}
+}
