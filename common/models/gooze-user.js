@@ -174,9 +174,28 @@ module.exports = function(GoozeUser) {
   };
 
   GoozeUser.observe('access', function normalizeUsernameCase(ctx, next) {
-    if (ctx.query.where && ctx.query.where.username && typeof(ctx.query.where.username) === 'string') {
-      ctx.query.where.username = ctx.query.where.username.toLowerCase();
+    debug('access hook called - normalizing username case: ' + JSON.stringify(ctx));
+    var usernameParent = findObjectWithProperty(ctx.query.where, 'username');
+    debug('username parent: ' + JSON.stringify(usernameParent));
+    if (usernameParent && typeof(usernameParent.username) === 'string') {
+      usernameParent.username = usernameParent.username.toLowerCase();
+      debug('new username set: ' + usernameParent.username);
     }
     next();
   });
 };
+
+function findObjectWithProperty(object, key) {
+  var value;
+  Object.keys(object).some(function(k) {
+    if (k === key) {
+      value = object;
+      return true;
+    }
+    if (object[k] && typeof object[k] === 'object') {
+      value = findObjectWithProperty(object[k], key);
+      return value !== undefined;
+    }
+  });
+  return value;
+}

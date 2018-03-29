@@ -69,7 +69,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
         );
       })
       .then(function(promisesResult) {
-        var senderUser = promisesResult[0];
+        var sender = promisesResult[0];
         var dateRequest = promisesResult[1];
         var recipientSocket;
 
@@ -78,9 +78,10 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
           senderId: senderId,
           recipientId: recipientId,
           status: 'sent',
-          senderUser: senderUser
+          sender: sender
         };
-        debug('dateRequestSent - DateRequest persisted with [id=' + dateRequest.id + ']');
+        debug('dateRequestSent - DateRequest persisted ' + JSON.stringify(dateRequest) + ']');
+        debug('dateRequestSent - Sender public profile' + JSON.stringify(sender) + ']');
 
         debug('dateRequestSent - Emitting dateRequestReceived event to [id=' + recipientId + ']');
         recipientSocket = clients[recipientId];
