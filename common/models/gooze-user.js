@@ -54,8 +54,15 @@ module.exports = function(GoozeUser) {
     returns: {type: [], root: true}
   });
 
+  /**
+   * Gets user public profile
+   * @param id
+   * @param cb
+   * @returns {Promise}
+   */
   GoozeUser.publicProfile = function(id, cb) {
-    GoozeUser.findById(id, {
+    cb = typeof cb === 'function' ? cb : undefined;
+    return GoozeUser.findById(id, {
       fields: {
         id: true,
         username: true,
@@ -77,9 +84,8 @@ module.exports = function(GoozeUser) {
         profilePic: true,
         photos: true
       }
-    }, function(err, user) {
-      cb(err, user);
-    });
+      // if cb is not a function it will return a promise
+    }, cb);
   };
 
   GoozeUser.remoteMethod('publicProfile', {
