@@ -15,7 +15,7 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
     var message = data[0];
     var recipientSocket;
 
-    recipientSocket = clients[message.recipientId];
+    recipientSocket = clients[message.recipient.id];
     if (recipientSocket) {
       recipientSocket.emit(events.messageReceived, message, function ack() {
         debug('Recipient has received the message');

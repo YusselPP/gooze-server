@@ -11,27 +11,38 @@ module.exports = function(GoozeUser) {
   GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
   GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
-  // TODO: filter current user
   // TODO: add optional filter to show bad rate users
   GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
     debug(options);
+    var where = {
+      currentLocation: {
+        near: location,
+        maxDistance: maxDistance || 0,
+        unit: 'kilometers'
+      },
+      activeUntil: {
+        gte: new Date()
+      }
+    };
+    var userId = options && options.accessToken && options.accessToken.userId;
+    if (userId) {
+      where.id = {
+        neq: userId
+      };
+    }
     GoozeUser.find({
-      where: {
-        currentLocation: {
-          near: location,
-          maxDistance: maxDistance || 0,
-          unit: 'kilometers'
-        },
-        activeUntil: {
-          gte: new Date()
-        }
-      },
-      fields: {
-        id: true,
-        username: true,
-        searchPic: true,
-        currentLocation: true
-      },
+      where: where,
+      fields: [
+        'id',
+        'username',
+        'searchPic',
+        'currentLocation',
+        'imagesRating',
+        'complianceRating',
+        'dateQualityRating',
+        'dateRating',
+        'goozeRating'
+      ],
       limit: limit || 5
     }, function(err, users) {
       cb(err, users);

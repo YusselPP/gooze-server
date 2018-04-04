@@ -152,5 +152,19 @@
       "property": "publicProfile"
     }
   ],
+  "scopes": {
+    "chatUser": {
+      "fields": [
+        "id",
+        "username",
+        "searchPic",
+        "imagesRating",
+        "complianceRating",
+        "dateQualityRating",
+        "dateRating",
+        "goozeRating"
+      ]
+    }
+  },
   "methods": {}
 }

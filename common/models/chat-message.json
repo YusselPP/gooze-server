@@ -1,5 +1,5 @@
 {
-  "name": "DateRequest",
+  "name": "ChatMessage",
   "base": "PersistedModel",
   "idInjection": true,
   "options": {
@@ -13,6 +13,15 @@
     "SoftDelete" : true
   },
   "properties": {
+    "text": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "string",
+      "required": true,
+      "default": "user"
+    },
     "status": {
       "type": "string",
       "required": true,
