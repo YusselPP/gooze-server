@@ -28,6 +28,42 @@
       "default": "sent"
     }
   },
+  "scope": {
+    "include": [
+      {
+        "relation": "sender",
+        "scope": {
+          "fields": [
+            "id",
+            "username",
+            "email",
+            "searchPic",
+            "imagesRating",
+            "complianceRating",
+            "dateQualityRating",
+            "dateRating",
+            "goozeRating"
+          ]
+        }
+      },
+      {
+        "relation": "recipient",
+        "scope": {
+          "fields": [
+            "id",
+            "username",
+            "email",
+            "searchPic",
+            "imagesRating",
+            "complianceRating",
+            "dateQualityRating",
+            "dateRating",
+            "goozeRating"
+          ]
+        }
+      }
+    ]
+  },
   "relations": {
     "sender": {
       "type": "belongsTo",
@@ -38,6 +74,7 @@
           "fields": [
             "id",
             "username",
+            "email",
             "searchPic",
             "imagesRating",
             "complianceRating",
@@ -57,6 +94,7 @@
           "fields": [
             "id",
             "username",
+            "email",
             "searchPic",
             "imagesRating",
             "complianceRating",

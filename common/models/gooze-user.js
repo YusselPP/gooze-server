@@ -13,7 +13,11 @@ module.exports = function(GoozeUser) {
 
   // TODO: add optional filter to show bad rate users
   GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
+    var DateRequest = GoozeUser.app.models.DateRequest;
+    var ObjectID = DateRequest.dataSource.ObjectID;
+
     debug(options);
+    cb = typeof cb === 'function' ? cb : undefined;
     var where = {
       currentLocation: {
         near: location,
@@ -30,23 +34,100 @@ module.exports = function(GoozeUser) {
         neq: userId
       };
     }
-    GoozeUser.find({
-      where: where,
-      fields: [
-        'id',
-        'username',
-        'searchPic',
-        'currentLocation',
-        'imagesRating',
-        'complianceRating',
-        'dateQualityRating',
-        'dateRating',
-        'goozeRating'
-      ],
-      limit: limit || 5
-    }, function(err, users) {
-      cb(err, users);
-    });
+
+    var promise = (
+      Promise.all([
+        GoozeUser.find({
+          where: where,
+          fields: [
+            'id',
+            'username',
+            'email',
+            'searchPic',
+            'currentLocation',
+            'imagesRating',
+            'complianceRating',
+            'dateQualityRating',
+            'dateRating',
+            'goozeRating'
+          ],
+          limit: limit || 5
+        }),
+        DateRequest.find({
+          where: {
+            senderId: userId,
+            or: [
+              {status: DateRequest.constants.status.sent},
+              {status: DateRequest.constants.status.received},
+              {status: DateRequest.constants.status.accepted}
+            ]
+          }
+        })
+      ]).then(function(result) {
+        var users = result[0];
+        var dateRequests = result[1];
+
+        if (dateRequests && dateRequests.length > 0) {
+          debug('findByLocation - found ' + dateRequests.length + ' unresponded requests.');
+
+          var convertibleUsers = users.map(function(user) {
+            var userDateReq;
+            var userId = user.id instanceof ObjectID ? user.id.toJSON() : user.id;
+
+            debug('userId: ' + userId);
+
+            dateRequests
+              .some(function(dateReq, index, array) {
+                var recipientId = dateReq.recipientId;
+
+                recipientId = (
+                  (recipientId instanceof DateRequest.dataSource.ObjectID) ?
+                    recipientId.toJSON() :
+                    recipientId
+                );
+
+                var exists = recipientId === userId;
+
+                if (exists) {
+                  debug('user: ' + user.id + ' converted to request: ' + dateReq.id);
+                  userDateReq = dateReq;
+                  array.splice(index, 1);
+                }
+
+                return exists;
+              });
+
+            if (userDateReq) {
+              return userDateReq;
+            } else {
+              return user;
+            }
+          });
+
+          if (cb) {
+            cb(null, convertibleUsers);
+          }
+          return convertibleUsers;
+        } else {
+          debug('findByLocation - no unresponded requests found.');
+          if (cb) {
+            cb(null, users);
+          }
+          return users;
+        }
+      })
+        .catch(function(err) {
+          if (cb) {
+            cb(err);
+          } else {
+            throw err;
+          }
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
   };
 
   GoozeUser.remoteMethod('findByLocation', {
@@ -77,6 +158,7 @@ module.exports = function(GoozeUser) {
       fields: {
         id: true,
         username: true,
+        email: true,
         birthday: true,
         gender: true,
         weight: true,
@@ -92,6 +174,7 @@ module.exports = function(GoozeUser) {
         dateRating: true,
         goozeRating: true,
 
+        searchPic: true,
         profilePic: true,
         photos: true
       }
@@ -109,7 +192,9 @@ module.exports = function(GoozeUser) {
     ],
     returns: {
       type: {
+        id: 'string',
         username: 'string',
+        email: 'string',
         birthday: 'date',
         gender: 'string',
         weight: 'number',
@@ -124,6 +209,13 @@ module.exports = function(GoozeUser) {
         dateQualityRating: 'number',
         dateRating: 'number',
         goozeRating: 'number',
+
+        searchPic: {
+          'container': 'string',
+          'url': 'string',
+          'name': 'string',
+          'blocked': 'boolean'
+        },
 
         profilePic: {
           'container': 'string',

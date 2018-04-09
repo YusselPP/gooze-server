@@ -157,6 +157,7 @@
       "fields": [
         "id",
         "username",
+        "email",
         "searchPic",
         "imagesRating",
         "complianceRating",

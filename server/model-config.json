@@ -58,6 +58,14 @@
       }
     }
   },
+  "ChatMessage": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
+  "Chat": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
   "container": {
     "dataSource": "storage",
     "public": true

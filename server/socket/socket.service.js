@@ -29,7 +29,8 @@ function createSocketChannels(webServer, app) {
     var clients = {};
     var authConfig = {
       authenticate: handleAuthentication,
-      postAuthenticate: handlePostAuthentication
+      postAuthenticate: handlePostAuthentication,
+      timeout: 3000
     };
 
     channel.on('connection', function(socket) {

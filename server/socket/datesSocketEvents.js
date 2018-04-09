@@ -12,6 +12,7 @@ var events = {
 };
 
 module.exports = function addDatesSocketEvents(socket, clients, app) {
+  var Chat = app.models.Chat;
   var DateRequest = app.models.DateRequest;
   var GoozeUser = app.models.GoozeUser;
 
@@ -43,8 +44,9 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
         senderId: senderId,
         recipientId: recipientId,
         or: [
-          {status: 'sent'},
-          {status: 'received'}
+          {status: DateRequest.constants.status.sent},
+          {status: DateRequest.constants.status.received},
+          {status: DateRequest.constants.status.accepted}
         ]
       }
     })
@@ -65,7 +67,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
             DateRequest.create({
               senderId: senderId,
               recipientId: recipientId,
-              status: 'sent'
+              status: DateRequest.constants.status.sent
             })
           ])
         );
@@ -83,7 +85,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
         sentRequest.recipient = recipient;
         receivedRequest.sender = sender;
         receivedRequest.recipient = recipient;
-        receivedRequest.status = 'received';
+        receivedRequest.status = DateRequest.constants.status.received;
         debug('dateRequestSent - DateRequest persisted ' + JSON.stringify(dateRequest));
         debug('dateRequestSent - Sender public profile ' + JSON.stringify(sender));
         debug('dateRequestSent - Recipient ' + JSON.stringify(recipient));
@@ -96,7 +98,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
             debug('date request has been received');
             // Also add a hook to the method that query date request
             // in order to update the request state when the recipient user is not connected
-            dateRequest.updateAttribute('status', 'received')
+            dateRequest.updateAttribute('status', DateRequest.constants.status.received)
               .then(function(updatedDateRequest) {
                 debug('date request status updated: received');
                 var updatedRequestJson = updatedDateRequest.toJSON();
@@ -121,14 +123,12 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
 
   socket.on(events.acceptRequest, function(data, callback) {
     debug('acceptRequest - event received');
-    var error;
+    var error, chat;
     // var recipientId = socket.userId;
     var dateRequestId = data[0];
 
-    debug('acceptRequest - Accepting request: ' + dateRequestId);
-
     DateRequest.findById(dateRequestId, {
-      include: ['sender', 'recipient']
+      // include: ['sender', 'recipient']
     })
       .then(function(dateRequest) {
         if (!dateRequest) {
@@ -142,15 +142,41 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
           throw error;
         }
 
-        debug('acceptRequest - updating request status: ' + JSON.stringify(dateRequest.toJSON()));
-        return dateRequest.updateAttribute('status', 'accepted');
+        if (
+          dateRequest.status !== DateRequest.constants.status.sent &&
+          dateRequest.status !== DateRequest.constants.status.received
+        ) {
+          debug('acceptRequest - Request can\'t be accepted');
+          error = new Error('Request can\'t be accepted');
+          error.statusCode = error.status = 409;
+          error.code = 'REQUEST_INVALID_STATUS';
+          error.details = {
+            current: dateRequest.status,
+            needed: DateRequest.constants.status.sent + ' or ' + DateRequest.constants.status.received
+          };
+          throw error;
+        }
+
+        debug('acceptRequest - creating chat');
+        return (
+          Chat.create({
+            dateRequestId: dateRequestId
+          })
+            .then(function(createdChat) {
+              chat = createdChat;
+              debug('acceptRequest - chat created: id=' + chat.id);
+              debug('acceptRequest - updating request status: ' + JSON.stringify(dateRequest.toJSON()));
+              return dateRequest.updateAttributes({status: DateRequest.constants.status.accepted});
+            })
+        );
       })
       .then(function(dateRequest) {
         var senderSocket, senderId;
 
         var dateRequestJson = dateRequest.toJSON();
-        dateRequestJson.sender = dateRequest.sender();
-        dateRequestJson.recipient = dateRequest.recipient();
+        // dateRequestJson.sender = dateRequest.sender();
+        // dateRequestJson.recipient = dateRequest.recipient();
+        dateRequestJson.chat = chat.toJSON();
 
         senderId = dateRequestJson.sender && dateRequestJson.sender.id;
 
@@ -172,5 +198,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
         debug(err);
         callback(err);
       });
+
+    debug('acceptRequest - Accepting request: ' + dateRequestId);
   });
 };
