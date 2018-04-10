@@ -19,6 +19,7 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
 
     var recipientSocket, text, senderId, recipientId, error;
     var message = data[0];
+    var username = data[1];
 
     if (typeof message !== 'object') {
       debug('sendMessage - Invalid message');
@@ -30,8 +31,8 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
     }
 
     text = message.text;
-    senderId = message.sender && message.sender.id;
-    recipientId = message.recipient && message.recipient.id;
+    senderId = message.senderId;
+    recipientId = message.recipientId;
 
     debug('sendMessage - Persisting message');
     ChatMessage.create({
@@ -39,19 +40,21 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
       senderId: senderId,
       recipientId: recipientId,
       type: message.type,
-      status: 'sent'
+      status: 'sent',
+      createdAt: message.createdAt,
+      updatedAt: message.updatedAt
     })
       .then(function(chatMessage) {
         var chatMessageJson = chatMessage.toJSON();
         debug('sendMessage - Persisted message: ' + JSON.stringify(chatMessageJson));
 
-        chatMessageJson.sender = message.sender;
-        chatMessageJson.recipient = message.recipient;
+        // chatMessageJson.sender = message.sender;
+        // chatMessageJson.recipient = message.recipient;
 
         debug('sendMessage - Emitting message: ' + JSON.stringify(chatMessageJson));
-        recipientSocket = clients[message.recipient.id];
+        recipientSocket = clients[recipientId];
         if (recipientSocket) {
-          recipientSocket.emit(events.messageReceived, chatMessageJson, function ack() {
+          recipientSocket.emit(events.messageReceived, chatMessageJson, username, function ack() {
             debug('sendMessage - Recipient has received the message');
 
             debug('sendMessage - Updating message status to received');
@@ -60,8 +63,8 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
                 debug('sendMessage - Message status updated: received');
                 var updatedChatMessageJson = updatedChatMessage.toJSON();
 
-                updatedChatMessageJson.sender = message.sender;
-                updatedChatMessageJson.recipient = message.recipient;
+                // updatedChatMessageJson.sender = message.sender;
+                // updatedChatMessageJson.recipient = message.recipient;
 
                 socket.emit(events.messageReceivedAck, updatedChatMessageJson);
                 debug('sendMessage - Successfully emitted: messageReceivedAck event');
