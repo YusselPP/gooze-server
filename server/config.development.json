@@ -1,3 +1,4 @@
 {
-  "port": 3005
+  "restApiRoot": "/development/api",
+  "port": 3000
 }
