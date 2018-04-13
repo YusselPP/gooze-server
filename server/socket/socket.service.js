@@ -19,7 +19,11 @@ var namespaces = {
 };
 
 function createSocketChannels(webServer, app) {
-  var io = new Server(webServer);
+  var io = new Server(webServer, {
+    path: process.env.SOCKET_PATH
+  });
+
+  debug('server path: ' + io.path());
 
   app.chatSocketChannel = createChannel(io, namespaces.chat, chatSocketEvents);
   app.datesSocketChannel = createChannel(io, namespaces.dates, datesSocketEvents);
