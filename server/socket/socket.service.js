@@ -30,6 +30,7 @@ function createSocketChannels(webServer, app) {
 
   function createChannel(io, namespace, socketEvents) {
     var channel = io.of(namespace);
+    // TODO: Add support for clients logged in multiple devices at same time.
     var clients = {};
     var authConfig = {
       authenticate: handleAuthentication,
@@ -89,14 +90,22 @@ function createSocketChannels(webServer, app) {
           channelDebug('User authenticated. user.id: ' + tokenDetail.userId);
 
           socket.userId = tokenDetail.userId;
-          clients[credentials.userId] = socket;
-          channelDebug('Clients connected: ' + Object.keys(clients).length);
+
+          if (Array.isArray(clients[credentials.userId])) {
+            clients[credentials.userId].push(socket);
+          } else {
+            clients[credentials.userId] = [socket];
+          }
+          channelDebug('Clients connected: ' + countClients(clients));
 
           socket.on('disconnect', function() {
             channelDebug('User disconnected');
 
-            delete clients[credentials.userId];
-            channelDebug('Clients connected: ' + Object.keys(clients).length);
+            if (Array.isArray(clients[credentials.userId])) {
+              var index = clients[credentials.userId].indexOf(socket);
+              clients[credentials.userId].splice(index, 1);
+            }
+            channelDebug('Clients connected: ' + countClients(clients));
           });
 
           callback(null, true);
@@ -131,4 +140,19 @@ function sanitizeCredentials(credentials) {
     id: credentials.id,
     userId: credentials.userId
   };
+}
+
+function countClients(clients) {
+  return (
+    Object.keys(clients)
+      .reduce(function(result, clientKey) {
+        var client = clients[clientKey];
+
+        if (Array.isArray(client)) {
+          return result + client.length;
+        } else {
+          return result;
+        }
+      }, 0)
+  );
 }

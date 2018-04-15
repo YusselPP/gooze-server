@@ -1,5 +1,5 @@
 {
-  "name": "Chat",
+  "name": "AppConfig",
   "base": "PersistedModel",
   "idInjection": true,
   "options": {
@@ -13,30 +13,13 @@
     "SoftDelete" : true
   },
   "properties": {
-    "status": {
+    "name": {
       "type": "string",
-      "required": true,
-      "default": "active"
-    },
-    "user1Id": {
-      "type": "object",
       "required": true
     },
-    "user2Id": {
+    "config": {
       "type": "object",
       "required": true
-    }
-  },
-  "relations": {
-    "dateRequest": {
-      "type": "hasMany",
-      "model": "DateRequest",
-      "foreignKey": "chatId"
-    },
-    "messages": {
-      "type": "hasMany",
-      "model": "ChatMessage",
-      "foreignKey": "chatId"
     }
   },
   "acls": [
@@ -47,9 +30,10 @@
     },
     {
       "principalType": "ROLE",
-      "principalId": "$authenticated",
+      "principalId": "$everyone",
       "permission": "ALLOW",
-      "property": "find"
+      "accessType": "EXECUTE",
+      "property": "findByName"
     }
   ],
   "methods": {}

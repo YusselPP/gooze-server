@@ -97,9 +97,9 @@
       }
     },
     "chat": {
-      "type": "hasOne",
+      "type": "belongsTo",
       "model": "Chat",
-      "foreignKey": "dateRequestId"
+      "foreignKey": "chatId"
     }
   },
   "acls": [

@@ -51,22 +51,6 @@
             "goozeRating"
           ]
         }
-      },
-      {
-        "relation": "recipient",
-        "scope": {
-          "fields": [
-            "id",
-            "username",
-            "email",
-            "searchPic",
-            "imagesRating",
-            "complianceRating",
-            "dateQualityRating",
-            "dateRating",
-            "goozeRating"
-          ]
-        }
       }
     ]
   },
@@ -91,25 +75,10 @@
         }
       }
     },
-    "recipient": {
+    "chat": {
       "type": "belongsTo",
-      "model": "GoozeUser",
-      "foreignKey": "recipientId",
-      "options": {
-        "scope": {
-          "fields": [
-            "id",
-            "username",
-            "email",
-            "searchPic",
-            "imagesRating",
-            "complianceRating",
-            "dateQualityRating",
-            "dateRating",
-            "goozeRating"
-          ]
-        }
-      }
+      "model": "Chat",
+      "foreignKey": "chatId"
     }
   },
   "acls": [

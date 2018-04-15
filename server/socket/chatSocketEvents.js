@@ -17,9 +17,10 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
     debug('sendMessage - event received');
     debug(JSON.stringify(data));
 
-    var recipientSocket, text, senderId, recipientId, error;
+    var recipientSockets, text, senderId, recipientId, error;
     var message = data[0];
-    var username = data[1];
+    var chatJson = data[1];
+    var username = data[2];
 
     if (typeof message !== 'object') {
       debug('sendMessage - Invalid message');
@@ -32,19 +33,25 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
 
     text = message.text;
     senderId = message.senderId;
-    recipientId = message.recipientId;
+
+    if (chatJson.user1Id === senderId) {
+      recipientId = chatJson.user2Id;
+    } else {
+      recipientId = chatJson.user1Id
+    }
 
     debug('sendMessage - Persisting message');
     ChatMessage.create({
+      chatId: message.chatId,
       text: text,
       senderId: senderId,
-      recipientId: recipientId,
       type: message.type,
       status: 'sent',
       createdAt: message.createdAt,
       updatedAt: message.updatedAt
     })
       .then(function(chatMessage) {
+        var isStatusReceived = false;
         var chatMessageJson = chatMessage.toJSON();
         debug('sendMessage - Persisted message: ' + JSON.stringify(chatMessageJson));
 
@@ -52,27 +59,29 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
         // chatMessageJson.recipient = message.recipient;
 
         debug('sendMessage - Emitting message: ' + JSON.stringify(chatMessageJson));
-        recipientSocket = clients[recipientId];
-        if (recipientSocket) {
-          recipientSocket.emit(events.messageReceived, chatMessageJson, username, function ack() {
-            debug('sendMessage - Recipient has received the message');
+        recipientSockets = clients[recipientId];
+        if (Array.isArray(recipientSockets)) {
+          recipientSockets.forEach(function(recipientSocket) {
+            recipientSocket.emit(events.messageReceived, chatMessageJson, chatJson, username, function ack() {
+              debug('sendMessage - Recipient has received the message');
 
-            debug('sendMessage - Updating message status to received');
-            chatMessage.updateAttribute('status', 'received')
-              .then(function(updatedChatMessage) {
-                debug('sendMessage - Message status updated: received');
-                var updatedChatMessageJson = updatedChatMessage.toJSON();
+              if (!isStatusReceived) {
+                isStatusReceived = true;
+                debug('sendMessage - Updating message status to received');
+                chatMessage.updateAttribute('status', 'received')
+                  .then(function(updatedChatMessage) {
+                    debug('sendMessage - Message status updated: received');
+                    var updatedChatMessageJson = updatedChatMessage.toJSON();
 
-                // updatedChatMessageJson.sender = message.sender;
-                // updatedChatMessageJson.recipient = message.recipient;
-
-                socket.emit(events.messageReceivedAck, updatedChatMessageJson);
-                debug('sendMessage - Successfully emitted: messageReceivedAck event');
-              }).catch(function(err) {
-                debug(err);
-              });
+                    socket.emit(events.messageReceivedAck, updatedChatMessageJson);
+                    debug('sendMessage - Successfully emitted: messageReceivedAck event');
+                  }).catch(function(err) {
+                    debug(err);
+                  });
+              }
+            });
+            debug('sendMessage - Successfully emitted: messageReceived event');
           });
-          debug('sendMessage - Successfully emitted: messageReceived event');
         } else {
           debug('sendMessage - Recipient socket not found on connected clients list. Message not emitted');
         }
@@ -96,24 +105,9 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
     debug('retrieveHistory - Retrieving messages from chatId: ' + chatId);
     Chat.findById(chatId)
       .then(function(chat) {
-        return ChatMessage.find({
-          where: {
-            or: [
-              {
-                and: [{senderId: chat.owner.id}, {recipientId: chat.recipient.id}]
-              },
-              {
-                and: [{senderId: chat.recipient.id}, {recipientId: chat.owner.id}]
-              }
-            ]
-          },
+        return chat.messages({
           limit: 20,
           order: 'createdAt DESC'
-        });
-      })
-      .then(function(chatMessages) {
-        return chatMessages.sort(function(a, b) {
-          return a.createdAt - b.createdAt;
         });
       })
       .then(function(chatMessages) {

@@ -38,6 +38,18 @@
     "dataSource": "db",
     "public": false
   },
+  "AppConfig": {
+    "dataSource": "mongoDs",
+    "public": true,
+    "options": {
+      "remoting": {
+        "sharedMethods": {
+          "*": false,
+          "findByName": true
+        }
+      }
+    }
+  },
   "GoozeUser": {
     "dataSource": "mongoDs",
     "public": true
