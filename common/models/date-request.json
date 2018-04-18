@@ -17,6 +17,9 @@
       "type": "string",
       "required": true,
       "default": "sent"
+    },
+    "amount": {
+      "type": "number"
     }
   },
   "scope": {
@@ -52,6 +55,9 @@
             "goozeRating"
           ]
         }
+      },
+      {
+        "relation": "chat"
       }
     ]
   },

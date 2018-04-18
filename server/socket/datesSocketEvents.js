@@ -3,6 +3,8 @@
 var debug = require('debug')('gooze:dates-socket-events');
 
 var events = {
+  findRequestById: 'findRequestById',
+
   dateRequestSent: 'dateRequestSent',
   dateRequestReceived: 'dateRequestReceived',
   dateRequestReceivedAck: 'dateRequestReceivedAck',
@@ -15,6 +17,20 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
   var Chat = app.models.Chat;
   var DateRequest = app.models.DateRequest;
   var GoozeUser = app.models.GoozeUser;
+
+  socket.on(events.findRequestById, function(data, callback) {
+    var requestId = data[0];
+
+    debug('findRequestById - Retrieving request id: ' + requestId);
+    DateRequest.findById(requestId)
+      .then(function(dateRequest) {
+        callback(null, dateRequest);
+      })
+      .catch(function(err) {
+        console.error(err);
+        callback(err);
+      });
+  });
 
   socket.on(events.dateRequestSent, function(data, callback) {
     debug('dateRequestSent - event received');
