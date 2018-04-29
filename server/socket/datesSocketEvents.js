@@ -10,13 +10,17 @@ var events = {
   dateRequestReceivedAck: 'dateRequestReceivedAck',
 
   acceptRequest: 'acceptRequest',
-  requestAccepted: 'requestAccepted'
+  requestAccepted: 'requestAccepted',
+
+  createCharge: 'createCharge',
+  createChargeSuccess: 'createChargeSuccess'
 };
 
 module.exports = function addDatesSocketEvents(socket, clients, app) {
   var Chat = app.models.Chat;
   var DateRequest = app.models.DateRequest;
   var GoozeUser = app.models.GoozeUser;
+  var GZEDate = app.models.GZEDate;
 
   socket.on(events.findRequestById, function(data, callback) {
     var requestId = data[0];
@@ -247,5 +251,83 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
       });
 
     debug('acceptRequest - Accepting request: ' + dateRequestId);
+  });
+
+  socket.on(events.createCharge, function(data, callback) {
+    var funcName = 'createCharge';
+    debug(funcName + ' - event received');
+    var chatService = app.chatSocketChannel.customService;
+    var error, date;
+    var dateRequestId = data[0];
+
+    var message = data[1];
+    var username = data[2];
+    var chatJson = data[3];
+    var mode = data[4];
+
+    DateRequest.findById(dateRequestId)
+      .then(function(dateRequest) {
+        if (!dateRequest) {
+          debug(funcName + ' - Request not found');
+          error = new Error('Request not found');
+          error.statusCode = error.status = 404;
+          error.code = 'REQUEST_NOT_FOUND';
+          error.details = {
+            dateRequestId: dateRequestId
+          };
+          throw error;
+        }
+
+        debug(funcName + ' - creating date');
+        return (
+          GZEDate.create()
+            .then(function(createdDate) {
+              date = createdDate;
+              debug(funcName + ' - assigned date: id=' + createdDate.id);
+              debug(funcName + ' - linking date with date request id=' + dateRequest.id);
+              return dateRequest.updateAttributes({
+                dateId: createdDate.id
+              });
+            })
+        );
+      })
+      .then(function(dateRequest) {
+        var recipientSockets, recipientId;
+        var dateRequestJson = dateRequest.toJSON();
+
+        dateRequestJson.date = date.toJSON();
+        recipientId = dateRequestJson.recipient && dateRequestJson.recipient.id;
+
+        debug(funcName + 'date request updated');
+        debug(funcName + ' - Emitting createChargeSuccess event to [id=' + recipientId + ']');
+        recipientSockets = clients[recipientId];
+        if (Array.isArray(recipientSockets)) {
+          recipientSockets.forEach(function(recipientSocket) {
+            recipientSocket.emit(events.createChargeSuccess, dateRequestJson, function ack() {
+              // recipient has received requestAccepted event
+              debug(funcName + ' - createChargeSuccess event has been received');
+            });
+            debug(funcName + ' - Successfully emitted: createChargeSuccess event');
+          });
+        } else {
+          debug(funcName + ' - Recipient socket not found on connected clients list. createChargeSuccess not emitted');
+        }
+
+        chatService.sendMessage([message, username, chatJson, dateRequestId, mode], function(err) {
+          if (err) {
+            debug(funcName + ' - Failed to send createChargeSuccess message');
+            return;
+          }
+          debug(funcName + ' - createChargeSuccess message sent successfully');
+        });
+
+        callback(null, dateRequestJson);
+      })
+      .catch(function(err) {
+        console.error(err);
+        callback(err);
+      });
+
+    debug(funcName + ' - Creating charge');
   });
 };

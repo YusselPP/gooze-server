@@ -10,13 +10,18 @@ var events = {
   requestAmount: 'requestAmount',
   amountRequestReceived: 'amountRequestReceived',
 
-  retrieveHistory: 'retrieveHistory'
+  retrieveMessages: 'retrieveMessages',
 };
 
-module.exports = function addChatSocketEvents(socket, clients, app) {
+module.exports = function addChatSocketEvents(socket, clients, app, channel) {
   var Chat = app.models.Chat;
   var ChatMessage = app.models.ChatMessage;
   var DateRequest = app.models.DateRequest;
+
+  channel.customService = {
+    sendMessage: handleSendMessage
+  };
+
   socket.on(events.sendMessage, handleSendMessage);
 
   socket.on(events.requestAmount, function(data, callback) {
@@ -70,7 +75,7 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
           debug('requestAmount - Amount message sent successfully');
         });
 
-        callback(null, true);
+        callback(null, message);
       })
       .catch(function(err) {
         console.error(err);
@@ -83,21 +88,33 @@ module.exports = function addChatSocketEvents(socket, clients, app) {
   // request --(request.canceled|rejected)--/
   // chat --(chat.closed)--/
   // date --(canceled|ended)--/
-  socket.on(events.retrieveHistory, function(data, callback) {
+  socket.on(events.retrieveMessages, function(data, callback) {
+    var error;
     var chatId = data[0];
+    var filter = data[1];
 
-    debug('retrieveHistory - Retrieving messages from chatId: ' + chatId);
+    filter.limit = filter.limit || 20;
+
+    debug('retrieveMessages - Retrieving messages from chatId: ' + chatId);
     Chat.findById(chatId)
       .then(function(chat) {
-        return chat.messages({
-          limit: 20,
-          order: 'createdAt DESC'
-        });
+        if (!chat) {
+          debug('retrieveMessages - Chat not found');
+          error = new Error('Chat not found');
+          error.statusCode = error.status = 404;
+          error.code = 'CHAT_NOT_FOUND';
+          error.details = {
+            chatId: chatId
+          };
+          throw error;
+        }
+
+        return chat.messages(filter);
       })
       .then(function(chatMessages) {
-        debug('retrieveHistory - Found messages: ' + JSON.stringify(chatMessages));
+        debug('retrieveMessages - Found messages: ' + JSON.stringify(chatMessages));
 
-        callback(null, chatMessages.reverse());
+        callback(null, chatMessages);
       })
       .catch(function(err) {
         console.error(err);

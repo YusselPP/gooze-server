@@ -58,6 +58,9 @@
       },
       {
         "relation": "chat"
+      },
+      {
+        "relation": "date"
       }
     ]
   },
@@ -106,6 +109,11 @@
       "type": "belongsTo",
       "model": "Chat",
       "foreignKey": "chatId"
+    },
+    "date": {
+      "type": "belongsTo",
+      "model": "GZEDate",
+      "foreignKey": "dateId"
     }
   },
   "acls": [

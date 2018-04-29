@@ -78,6 +78,10 @@
     "dataSource": "mongoDs",
     "public": false
   },
+  "GZEDate": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
   "container": {
     "dataSource": "storage",
     "public": true

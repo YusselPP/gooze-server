@@ -118,7 +118,7 @@ function createSocketChannels(webServer, app) {
 
     function handlePostAuthentication(socket) {
       channelDebug('Attaching channel events');
-      socketEvents(socket, clients, app);
+      socketEvents(socket, clients, app, channel);
     }
 
     function channelDebug(message) {

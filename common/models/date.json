@@ -1,0 +1,43 @@
+{
+  "name": "GZEDate",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "validateUpsert": true,
+      "required": true
+    },
+    "SoftDelete" : true
+  },
+  "properties": {
+    "status": {
+      "type": "string",
+      "required": true,
+      "default": "route"
+    }
+  },
+  "relations": {
+    "dateRequest": {
+      "type": "hasMany",
+      "model": "DateRequest",
+      "foreignKey": "dateId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "find"
+    }
+  ],
+  "methods": {}
+}
