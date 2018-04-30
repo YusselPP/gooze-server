@@ -67,15 +67,14 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
           debug('requestAmount - Recipient socket not found on connected clients list. Amount request not emitted');
         }
 
-        handleSendMessage([message, username, chatJson, dateRequestId, mode], function(err) {
+        handleSendMessage([message, username, chatJson, dateRequestId, mode], function(err, sentMessage) {
           if (err) {
             debug('requestAmount - Failed to send amount message');
-            return;
+            throw err;
           }
           debug('requestAmount - Amount message sent successfully');
+          callback(null, sentMessage);
         });
-
-        callback(null, message);
       })
       .catch(function(err) {
         console.error(err);
