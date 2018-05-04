@@ -13,14 +13,21 @@ var events = {
   requestAccepted: 'requestAccepted',
 
   createCharge: 'createCharge',
-  createChargeSuccess: 'createChargeSuccess'
+  createChargeSuccess: 'createChargeSuccess',
+
+  updateLocation: 'updateLocation',
+  locationUpdateReceived: 'locationUpdateReceived'
 };
 
-module.exports = function addDatesSocketEvents(socket, clients, app) {
+module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
   var Chat = app.models.Chat;
   var DateRequest = app.models.DateRequest;
   var GoozeUser = app.models.GoozeUser;
   var GZEDate = app.models.GZEDate;
+
+  channel.customService = {
+    updateLocation: updateLocation
+  };
 
   socket.on(events.findRequestById, function(data, callback) {
     var requestId = data[0];
@@ -278,20 +285,42 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
           throw error;
         }
 
+        var dateRequestJson = dateRequest.toJSON();
+
         debug(funcName + ' - creating date');
         return (
-          GZEDate.create()
-            .then(function(createdDate) {
-              date = createdDate;
-              debug(funcName + ' - assigned date: id=' + createdDate.id);
-              debug(funcName + ' - linking date with date request id=' + dateRequest.id);
-              return dateRequest.updateAttributes({
-                dateId: createdDate.id
-              });
-            })
+          Promise.all([
+            GZEDate.create()
+              .then(function(createdDate) {
+                date = createdDate;
+                debug(funcName + ' - assigned date: id=' + createdDate.id);
+                debug(funcName + ' - linking date with date request id=' + dateRequest.id);
+                return dateRequest.updateAttributes({
+                  dateId: createdDate.id,
+                  status: DateRequest.constants.onDate
+                });
+              }),
+            GoozeUser.updateAll(
+              {
+                id: socket.userId
+              },
+              {
+                status: 'onDate',
+                mode: mode === 'client' ? 'gooze' : 'client'
+              }),
+            GoozeUser.updateAll(
+              {
+                id: dateRequestJson.recipient && dateRequestJson.recipient.id
+              },
+              {
+                status: 'onDate',
+                mode: mode
+              })
+          ])
         );
       })
-      .then(function(dateRequest) {
+      .then(function(result) {
+        var dateRequest = result[0];
         var recipientSockets, recipientId;
         var dateRequestJson = dateRequest.toJSON();
 
@@ -330,4 +359,32 @@ module.exports = function addDatesSocketEvents(socket, clients, app) {
 
     debug(funcName + ' - Creating charge');
   });
+
+  socket.on(events.updateLocation, updateLocation);
+
+  function updateLocation(data, callback) {
+    var funcName = 'updateLocation';
+    debug(funcName + ' - event received');
+    var error, recipientSockets;
+    var recipientId = data[0];
+    var user = data[1];
+
+    debug(user);
+
+    // TODO: update user last location
+
+    debug(funcName + ' - Emitting locationUpdateReceived event to [id=' + recipientId + ']');
+    recipientSockets = clients[recipientId];
+    if (Array.isArray(recipientSockets)) {
+      recipientSockets.forEach(function(recipientSocket) {
+        recipientSocket.emit(events.locationUpdateReceived, user, function ack() {
+          debug(funcName + ' - locationUpdateReceived event has been received');
+        });
+        debug(funcName + ' - Successfully emitted: locationUpdateReceived event');
+      });
+    } else {
+      debug(funcName + ' - Recipient socket not found on connected clients list. locationUpdateReceived not emitted');
+    }
+    callback(null, true);
+  }
 };

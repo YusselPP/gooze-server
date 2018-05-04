@@ -8,7 +8,7 @@ var debug = require('debug')('gooze:gooze-user');
  */
 module.exports = function(GoozeUser) {
   GoozeUser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
-  GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable']});
+  GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable', 'onDate']});
   GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
   // TODO: add optional filter to show bad rate users
@@ -232,6 +232,43 @@ module.exports = function(GoozeUser) {
       },
       root: true
     }
+  });
+
+  GoozeUser.sendLocationUpdate = function(location, cb) {
+    debug(location);
+    var datesService = GoozeUser.app.datesSocketChannel.customService;
+
+    if (!datesService) {
+      cb(null, false);
+    }
+
+    datesService.updateLocation([location.recipientId, location.user], function(error, updated) {
+      debug(error, updated);
+      cb(error, updated);
+    });
+  };
+
+  GoozeUser.remoteMethod('sendLocationUpdate', {
+    http: {verb: 'post'},
+    accepts: [
+      /*{
+        arg: 'recipientId',
+        type: 'string',
+        required: true
+      },
+      {
+        arg: 'user',
+        type: [],
+        required: true
+      }*/
+      {
+        arg: 'location',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      }
+    ],
+    returns: {arg: 'updated', type: 'boolean'}
   });
 
   var userLogin = GoozeUser.login;

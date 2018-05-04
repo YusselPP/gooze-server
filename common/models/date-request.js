@@ -12,6 +12,7 @@ module.exports = function(DateRequest) {
       sent: 'sent',
       received: 'received',
       accepted: 'accepted',
+      onDate: 'onDate',
       rejected: 'rejected',
       ended: 'ended'
     }
