@@ -20,6 +20,9 @@
     },
     "amount": {
       "type": "number"
+    },
+    "location": {
+      "type": "GeoPoint"
     }
   },
   "scope": {

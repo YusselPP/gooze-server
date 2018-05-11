@@ -73,7 +73,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         or: [
           {status: DateRequest.constants.status.sent},
           {status: DateRequest.constants.status.received},
-          {status: DateRequest.constants.status.accepted}
+          {status: DateRequest.constants.status.accepted},
+          {status: DateRequest.constants.status.onDate}
         ]
       }
     })
@@ -89,14 +90,23 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         return (
           Promise.all([
             GoozeUser.publicProfile(senderId),
-            GoozeUser.publicProfile(recipientId),
-            DateRequest.create({
-              senderId: senderId,
-              recipientId: recipientId,
-              status: DateRequest.constants.status.sent
-            })
+            GoozeUser.publicProfile(recipientId)
           ])
         );
+      })
+      .then(function(promisesResult) {
+        var sender = promisesResult[0];
+
+        return DateRequest.create({
+          senderId: senderId,
+          recipientId: recipientId,
+          status: DateRequest.constants.status.sent,
+          location: sender.dateLocation
+        }).then(function(dateRequest) {
+          promisesResult.push(dateRequest);
+
+          return promisesResult;
+        });
       })
       .then(function(promisesResult) {
         var sender = promisesResult[0];
@@ -297,7 +307,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 debug(funcName + ' - linking date with date request id=' + dateRequest.id);
                 return dateRequest.updateAttributes({
                   dateId: createdDate.id,
-                  status: DateRequest.constants.onDate
+                  status: DateRequest.constants.status.onDate
                 });
               }),
             GoozeUser.updateAll(
@@ -328,6 +338,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         recipientId = dateRequestJson.recipient && dateRequestJson.recipient.id;
 
         debug(funcName + 'date request updated');
+        debug(funcName + 'updated request: ' + dateRequestJson);
         debug(funcName + ' - Emitting createChargeSuccess event to [id=' + recipientId + ']');
         recipientSockets = clients[recipientId];
         if (Array.isArray(recipientSockets)) {
@@ -371,7 +382,17 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
     debug(user);
 
-    // TODO: update user last location
+    GoozeUser.updateAll(
+      {
+        id: user.id
+      },
+      {
+        currentLocation: user.currentLocation
+      }).then(function() {
+        debug(funcName + 'user location persisted');
+      }).catch(function (reason) {
+        console.error(funcName + ' failed to persist user. ' + reason);
+    });
 
     debug(funcName + ' - Emitting locationUpdateReceived event to [id=' + recipientId + ']');
     recipientSockets = clients[recipientId];

@@ -89,6 +89,9 @@
     "currentLocation": {
       "type": "GeoPoint"
     },
+    "dateLocation": {
+      "type": "GeoPoint"
+    },
     "activeUntil": {
       "type": "date"
     },

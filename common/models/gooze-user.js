@@ -59,10 +59,19 @@ module.exports = function(GoozeUser) {
             or: [
               {status: DateRequest.constants.status.sent},
               {status: DateRequest.constants.status.received},
-              {status: DateRequest.constants.status.accepted}
+              {status: DateRequest.constants.status.accepted},
+              {status: DateRequest.constants.status.onDate}
             ]
           }
-        })
+        }),
+        GoozeUser.updateAll(
+          {
+            id: userId
+          },
+          {
+            dateLocation: location
+          }
+        )
       ]).then(function(result) {
         var users = result[0];
         var dateRequests = result[1];
@@ -168,6 +177,9 @@ module.exports = function(GoozeUser) {
         languages: true,
         interestedIn: true,
 
+        currentLocation: true,
+        dateLocation: true,
+
         imagesRating: true,
         complianceRating: true,
         dateQualityRating: true,
@@ -203,6 +215,9 @@ module.exports = function(GoozeUser) {
         phrase: 'string',
         languages: ['string'],
         interestedIn: ['string'],
+
+        currentLocation: 'GeoPoint',
+        dateLocation: 'GeoPoint',
 
         imagesRating: 'number',
         complianceRating: 'number',
@@ -242,7 +257,7 @@ module.exports = function(GoozeUser) {
       cb(null, false);
     }
 
-    datesService.updateLocation([location.recipientId, location.user], function(error, updated) {
+    datesService.updateLocation([location.location.recipientId, location.location.user], function(error, updated) {
       debug(error, updated);
       cb(error, updated);
     });
@@ -251,16 +266,6 @@ module.exports = function(GoozeUser) {
   GoozeUser.remoteMethod('sendLocationUpdate', {
     http: {verb: 'post'},
     accepts: [
-      /*{
-        arg: 'recipientId',
-        type: 'string',
-        required: true
-      },
-      {
-        arg: 'user',
-        type: [],
-        required: true
-      }*/
       {
         arg: 'location',
         type: 'object',
