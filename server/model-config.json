@@ -65,7 +65,9 @@
       "remoting": {
         "sharedMethods": {
           "*": false,
-          "find": true
+          "find": true,
+          "startDate": true,
+          "endDate": true
         }
       }
     }

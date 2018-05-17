@@ -7,9 +7,34 @@ var debug = require('debug')('gooze:gooze-user');
  * @param GoozeUser{GoozeUser}
  */
 module.exports = function(GoozeUser) {
+  GoozeUser.constants = {
+    status: {
+      available: 'available',
+      unavailable: 'unavailable',
+      onDate: 'onDate'
+    },
+    ratings: {
+      imagesRating: 'imagesRating',
+      complianceRating: 'complianceRating',
+      dateQualityRating: 'dateQualityRating',
+      dateRating: 'dateRating',
+      goozeRating: 'goozeRating'
+    },
+    maxRateValue: 5
+  };
+
   GoozeUser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
-  GoozeUser.validatesInclusionOf('status', {in: ['available', 'unavailable', 'onDate']});
+  GoozeUser.validatesInclusionOf('status', {in: Object.keys(GoozeUser.constants.status)});
   GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
+
+  var Rating = {
+    value: 'number',
+    count: 'number'
+  };
+
+  Object.keys(GoozeUser.constants.ratings).forEach(function (key) {
+    GoozeUser.defineProperty(key, {type: Rating});
+  });
 
   // TODO: add optional filter to show bad rate users
   GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
@@ -44,6 +69,7 @@ module.exports = function(GoozeUser) {
             'username',
             'email',
             'searchPic',
+            'profilePic',
             'currentLocation',
             'imagesRating',
             'complianceRating',
@@ -274,6 +300,94 @@ module.exports = function(GoozeUser) {
       }
     ],
     returns: {arg: 'updated', type: 'boolean'}
+  });
+
+  GoozeUser.addRate = function(userId, ratings, cb) {
+    debug(userId, ratings);
+
+    var promise;
+
+    cb = typeof cb === 'function' ? cb : undefined;
+
+    var parsedRatings = Object.keys(GoozeUser.constants.ratings).reduce(function(result, rateKey) {
+      var rate = ratings[rateKey];
+
+      if (rate > 0) {
+        result[rateKey + '.value'] = Math.min(rate, GoozeUser.constants.maxRateValue);
+        result[rateKey + '.count'] = 1;
+      }
+
+      return result;
+    }, {});
+
+    debug('addRate - parsed ratings: ', parsedRatings);
+
+    if (Object.keys(parsedRatings).length === 0) {
+      if (cb) {
+        cb(null, false);
+        return;
+      } else {
+        return Promise.resolve();
+      }
+    }
+
+    promise = (
+      GoozeUser.findById(userId)
+        .then(function(user) {
+          var error;
+
+          if (!user) {
+            debug('addRate - User not found');
+            error = new Error('User not found');
+            error.statusCode = error.status = 404;
+            error.code = 'USER_NOT_FOUND';
+            error.details = {
+              userId: userId
+            };
+            throw error;
+          }
+
+          return user.updateAttributes(
+            {
+              // TODO: test $inc
+              $inc: parsedRatings
+            }
+          );
+        })
+        .then(function() {
+          if (cb) {
+            cb(null, true);
+          }
+        })
+        .catch(function(reason) {
+          if (cb) {
+            cb(reason);
+          } else {
+            throw reason;
+          }
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+  };
+
+  GoozeUser.remoteMethod('addRate', {
+    http: {
+      path: '/:id/addRate',
+      verb: 'post'
+    },
+    accepts: [
+      {arg: 'id', type: 'string', required: true},
+      {
+        arg: 'ratings',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      }
+    ],
+    returns: {root: true, type: 'boolean'}
   });
 
   var userLogin = GoozeUser.login;

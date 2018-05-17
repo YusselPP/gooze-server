@@ -11,7 +11,8 @@
     "password": "${MONGO_PWD}",
     "name": "mongoDs",
     "user": "${MONGO_USER}",
-    "connector": "mongodb"
+    "connector": "mongodb",
+    "allowExtendedOperators": true
   },
   "storage": {
     "name": "storage",

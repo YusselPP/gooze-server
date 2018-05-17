@@ -16,7 +16,10 @@ var events = {
   createChargeSuccess: 'createChargeSuccess',
 
   updateLocation: 'updateLocation',
-  locationUpdateReceived: 'locationUpdateReceived'
+  locationUpdateReceived: 'locationUpdateReceived',
+
+  dateStarted: 'dateStarted',
+  dateEnded: 'dateEnded'
 };
 
 module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
@@ -26,15 +29,28 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
   var GZEDate = app.models.GZEDate;
 
   channel.customService = {
-    updateLocation: updateLocation
+    updateLocation: updateLocation,
+    emitDateStarted: emitDateStarted,
+    emitDateEnded: emitDateEnded
   };
 
   socket.on(events.findRequestById, function(data, callback) {
+    var error;
     var requestId = data[0];
 
     debug('findRequestById - Retrieving request id: ' + requestId);
     DateRequest.findById(requestId)
       .then(function(dateRequest) {
+        if (!dateRequest) {
+          debug('findRequestById - DateRequest not found');
+          error = new Error('Request not found');
+          error.statusCode = error.status = 404;
+          error.code = 'REQUEST_NOT_FOUND';
+          error.details = {
+            dateRequestId: requestId
+          };
+          throw error;
+        }
         callback(null, dateRequest);
       })
       .catch(function(err) {
@@ -315,7 +331,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 id: socket.userId
               },
               {
-                status: 'onDate',
+                status: GoozeUser.constants.status.onDate,
                 mode: mode === 'client' ? 'gooze' : 'client'
               }),
             GoozeUser.updateAll(
@@ -323,7 +339,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 id: dateRequestJson.recipient && dateRequestJson.recipient.id
               },
               {
-                status: 'onDate',
+                status: GoozeUser.constants.status.onDate,
                 mode: mode
               })
           ])
@@ -390,9 +406,9 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         currentLocation: user.currentLocation
       }).then(function() {
         debug(funcName + 'user location persisted');
-      }).catch(function (reason) {
+      }).catch(function(reason) {
         console.error(funcName + ' failed to persist user. ' + reason);
-    });
+      });
 
     debug(funcName + ' - Emitting locationUpdateReceived event to [id=' + recipientId + ']');
     recipientSockets = clients[recipientId];
@@ -407,5 +423,49 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
       debug(funcName + ' - Recipient socket not found on connected clients list. locationUpdateReceived not emitted');
     }
     callback(null, true);
+  }
+
+  function emitDateStarted(toUserId, dateRequest) {
+    var recipientSockets;
+
+    if (!toUserId) {
+      console.error('emitStartDate - undefined toUserId, .dateStarted event wont be emitted');
+      return;
+    }
+
+    recipientSockets = clients[toUserId];
+
+    if (Array.isArray(recipientSockets)) {
+      recipientSockets.forEach(function(recipientSocket) {
+        recipientSocket.emit(events.dateStarted, dateRequest, function ack() {
+          debug('emitStartDate - .dateStarted has been received');
+        });
+        debug('emitStartDate - Successfully emitted: .dateStarted event');
+      });
+    } else {
+      debug('emitStartDate - Recipient socket not found on connected clients list. dateStarted event not emitted');
+    }
+  }
+
+  function emitDateEnded(toUserId, dateRequest) {
+    var recipientSockets;
+
+    if (!toUserId) {
+      console.error('emitStartDate - undefined toUserId, .dateEnded event wont be emitted');
+      return;
+    }
+
+    recipientSockets = clients[toUserId];
+
+    if (Array.isArray(recipientSockets)) {
+      recipientSockets.forEach(function(recipientSocket) {
+        recipientSocket.emit(events.dateEnded, dateRequest, function ack() {
+          debug('emitStartDate - .dateEnded has been received');
+        });
+        debug('emitStartDate - Successfully emitted: .dateEnded event');
+      });
+    } else {
+      debug('emitStartDate - Recipient socket not found on connected clients list. dateEnded event not emitted');
+    }
   }
 };
