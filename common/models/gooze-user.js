@@ -304,6 +304,7 @@ module.exports = function(GoozeUser) {
 
   GoozeUser.addRate = function(userId, ratings, cb) {
     debug(userId, ratings);
+    var GZERateComment = GoozeUser.app.models.GZERateComment;
 
     var promise;
 
@@ -320,6 +321,8 @@ module.exports = function(GoozeUser) {
       return result;
     }, {});
 
+    var commentId = ratings.comment && ratings.comment.id;
+
     debug('addRate - parsed ratings: ', parsedRatings);
 
     if (Object.keys(parsedRatings).length === 0) {
@@ -332,7 +335,7 @@ module.exports = function(GoozeUser) {
     }
 
     promise = (
-      GoozeUser.findById(userId)
+      GoozeUser.findById(userId, {include: 'comments'})
         .then(function(user) {
           var error;
 
@@ -347,12 +350,74 @@ module.exports = function(GoozeUser) {
             throw error;
           }
 
-          return user.updateAttributes(
-            {
-              // TODO: test $inc
-              $inc: parsedRatings
-            }
+          debug('found user: ', user);
+
+          var updatePromises = [];
+
+          updatePromises.push(
+            user.updateAttributes(
+              {
+                $inc: parsedRatings
+              }
+            )
           );
+
+          if (commentId) {
+            updatePromises.push(
+              new Promise(function(resolve, reject) {
+                debug('addRate - Searching comment[id=' + commentId + ']');
+                user.comments({where: {commentId: commentId}}, function(err, comments) {
+                  if (err) {
+                    debug('addRate - Comment\'s search error: ', err);
+                    reject(err);
+                    return;
+                  }
+
+                  debug(comments);
+
+                  if (comments.length === 0) {
+                    debug('addRate - Comment not found, creating entry');
+                    GZERateComment.findById(commentId)
+                      .then(function(comment) {
+                        if (!comment) {
+                          debug('addRate - commentId not found in GZERateComment, ignoring comment');
+                          resolve(null);
+                          return;
+                        }
+                        debug('addRate - Valid commentId, adding comment to user');
+                        user.comments.create({count: 1, commentId: commentId}, function(err, comment) {
+                          if (err) {
+                            debug('addRate - Failed to create Comment, Error: ', err);
+                            reject(err);
+                            return;
+                          }
+                          debug('addRate - Comment successfully created');
+                          resolve(comment);
+                        });
+                      })
+                      .catch(function(reason) {
+                        reject(reason);
+                      });
+                  } else {
+                    debug('addRate - Comment found, updating count');
+                    GoozeUser.updateAll({id: userId, 'userComments.commentId': commentId}, {
+                      $inc: {'userComments.$.count': 1}
+                    }, function(err, comment) {
+                      if (err) {
+                        debug('addRate - Failed to update Comment, Error: ', err);
+                        reject(err);
+                        return;
+                      }
+                      debug('addRate - Comment successfully updated', comment);
+                      resolve(comment);
+                    });
+                  }
+                });
+              })
+            );
+          }
+
+          return Promise.all(updatePromises);
         })
         .then(function() {
           if (cb) {

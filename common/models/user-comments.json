@@ -1,0 +1,34 @@
+{
+  "name": "UserComments",
+  "base": "Model",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "properties": {
+    "id": {
+      "type": "number",
+      "id": true
+    },
+    "count": {
+      "type": "number",
+      "required": true,
+      "default": 0
+    }
+  },
+  "relations": {
+    "comment": {
+      "type": "belongsTo",
+      "model": "GZERateComment",
+      "foreignKey": "commentId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    }
+  ],
+  "methods": {}
+}

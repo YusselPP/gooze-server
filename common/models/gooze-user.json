@@ -115,6 +115,19 @@
       "type": "hasMany",
       "model": "DateRequest",
       "foreignKey": "recipientId"
+    },
+    "roles": {
+      "type": "hasMany",
+      "model": "Role",
+      "foreignKey": "principalId",
+      "through": "RoleMapping"
+    },
+    "comments": {
+      "type": "embedsMany",
+      "model": "UserComments",
+      "scope": {
+        "include": "comment"
+      }
     }
   },
   "acls": [
@@ -152,6 +165,27 @@
       "permission": "ALLOW",
       "accessType": "EXECUTE",
       "property": "addRate"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "__count__comments"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "__get__comments"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "__create__comments"
     }
   ],
   "scopes": {

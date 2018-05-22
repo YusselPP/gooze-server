@@ -124,7 +124,7 @@ module.exports = function(DateRequest) {
     } else if (dateRequest.recipient && dateRequest.recipient.id === userId) {
       notifiedUserId = dateRequest.sender && dateRequest.sender.id;
     } else {
-      console.error('DateRequest.startDate - Couldn\'t determine notifiedUserId');
+      console.error('DateRequest.endDate - Couldn\'t determine notifiedUserId');
     }
 
     promise = (
@@ -158,21 +158,24 @@ module.exports = function(DateRequest) {
             ])
           );
         })
-        .then(function(results) {
-          debug(results);
+        .then(function() {
+          return DateRequest.findById(dateRequest.id);
+        })
+        .then(function(updatedRequest) {
+          debug(updatedRequest);
 
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
           if (datesService) {
-            datesService.emitDateEnded(notifiedUserId, dateRequest);
+            datesService.emitDateEnded(notifiedUserId, updatedRequest);
           } else {
-            console.error('DateRequest.startDate - datesService not available yet');
+            console.error('DateRequest.endDate - datesService not available yet');
           }
 
           if (cb) {
-            cb(null, dateRequest);
+            cb(null, updatedRequest);
           } else {
-            return dateRequest;
+            return updatedRequest;
           }
         })
         .catch(function(reason) {

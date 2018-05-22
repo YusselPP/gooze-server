@@ -24,18 +24,18 @@
     "public": false
   },
   "ACL": {
-    "dataSource": "db",
+    "dataSource": "mongoDs",
     "public": false
   },
   "RoleMapping": {
-    "dataSource": "db",
+    "dataSource": "mongoDs",
     "public": false,
     "options": {
       "strictObjectIDCoercion": true
     }
   },
   "Role": {
-    "dataSource": "db",
+    "dataSource": "mongoDs",
     "public": false
   },
   "AppConfig": {
@@ -81,6 +81,14 @@
     "public": false
   },
   "GZEDate": {
+    "dataSource": "mongoDs",
+    "public": true
+  },
+  "GZERateComment": {
+    "dataSource": "mongoDs",
+    "public": true
+  },
+  "UserComments": {
     "dataSource": "mongoDs",
     "public": false
   },

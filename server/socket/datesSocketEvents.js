@@ -451,7 +451,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     var recipientSockets;
 
     if (!toUserId) {
-      console.error('emitStartDate - undefined toUserId, .dateEnded event wont be emitted');
+      console.error('emitDateEnded - undefined toUserId, .dateEnded event wont be emitted');
       return;
     }
 
@@ -460,12 +460,12 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     if (Array.isArray(recipientSockets)) {
       recipientSockets.forEach(function(recipientSocket) {
         recipientSocket.emit(events.dateEnded, dateRequest, function ack() {
-          debug('emitStartDate - .dateEnded has been received');
+          debug('emitDateEnded - .dateEnded has been received');
         });
-        debug('emitStartDate - Successfully emitted: .dateEnded event');
+        debug('emitDateEnded - Successfully emitted: .dateEnded event');
       });
     } else {
-      debug('emitStartDate - Recipient socket not found on connected clients list. dateEnded event not emitted');
+      debug('emitDateEnded - Recipient socket not found on connected clients list. dateEnded event not emitted');
     }
   }
 };
