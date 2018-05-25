@@ -82,6 +82,7 @@ module.exports = function(GoozeUser) {
         DateRequest.find({
           where: {
             senderId: userId,
+            recipientClosed: false,
             or: [
               {status: DateRequest.constants.status.sent},
               {status: DateRequest.constants.status.received},

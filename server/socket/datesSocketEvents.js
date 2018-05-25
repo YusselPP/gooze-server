@@ -2,6 +2,8 @@
 
 var debug = require('debug')('gooze:dates-socket-events');
 
+var oneChatPerRequest = true;
+
 var events = {
   findRequestById: 'findRequestById',
 
@@ -86,6 +88,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
       where: {
         senderId: senderId,
         recipientId: recipientId,
+        recipientClosed: false,
         or: [
           {status: DateRequest.constants.status.sent},
           {status: DateRequest.constants.status.received},
@@ -187,6 +190,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
     DateRequest.findById(dateRequestId)
       .then(function(dateRequest) {
+        var findChatPromise;
         if (!dateRequest) {
           debug('acceptRequest - Request not found');
           error = new Error('Request not found');
@@ -215,8 +219,11 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         debug('acceptRequest - accepting date request: ' + JSON.stringify(dateRequest.toJSON()));
 
         debug('acceptRequest - creating chat');
-        return (
-          Chat.findOne(
+
+        if (oneChatPerRequest) {
+          findChatPromise = Promise.resolve(null);
+        } else {
+          findChatPromise = Chat.findOne(
             {
               where: {
                 or: [
@@ -231,7 +238,11 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 ]
               }
             }
-          )
+          );
+        }
+
+        return (
+          findChatPromise
             .then(function(foundChat) {
               if (foundChat) {
                 debug('acceptRequest - chat found');
