@@ -67,7 +67,8 @@
           "*": false,
           "find": true,
           "startDate": true,
-          "endDate": true
+          "endDate": true,
+          "prototype.patchAttributes": true
         }
       }
     }

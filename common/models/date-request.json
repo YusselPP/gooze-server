@@ -23,6 +23,16 @@
     },
     "location": {
       "type": "GeoPoint"
+    },
+    "senderClosed": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "recipientClosed": {
+      "type": "boolean",
+      "required": true,
+      "default": false
     }
   },
   "scope": {
@@ -62,7 +72,16 @@
         }
       },
       {
-        "relation": "chat"
+        "relation": "chat",
+        "scope": {
+          "include": {
+            "relation": "messages",
+            "scope": {
+              "order": "createdAt DESC",
+              "limit": 1
+            }
+          }
+        }
       },
       {
         "relation": "date"
@@ -148,6 +167,13 @@
       "permission": "ALLOW",
       "accessType": "EXECUTE",
       "property": "endDate"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "requestOwners",
+      "permission": "ALLOW",
+      "accessType": "WRITE",
+      "property": "patchAttributes"
     }
   ],
   "methods": {}
