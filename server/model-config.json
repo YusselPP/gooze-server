@@ -93,6 +93,18 @@
     "dataSource": "mongoDs",
     "public": false
   },
+  "Payment": {
+    "dataSource": "db",
+    "public": true,
+    "options": {
+      "remoting": {
+        "sharedMethods": {
+          "*": false,
+          "createCustomer": true
+        }
+      }
+    }
+  },
   "container": {
     "dataSource": "storage",
     "public": true
