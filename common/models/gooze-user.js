@@ -215,8 +215,10 @@ module.exports = function(GoozeUser) {
 
         searchPic: true,
         profilePic: true,
-        photos: true
-      }
+        photos: true,
+        userComments: true
+      },
+      include: ['comments']
       // if cb is not a function it will return a promise
     }, cb);
   };

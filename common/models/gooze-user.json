@@ -97,6 +97,9 @@
     }
   },
   "validations": [],
+  "scope": {
+    "include": [ "comments"]
+  },
   "relations": {
     "accessTokens": {
       "type": "hasMany",
