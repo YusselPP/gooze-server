@@ -23,7 +23,7 @@ module.exports = function(DateRequest) {
 
   DateRequest.startDate = function(dateRequest, options, cb) {
     debug(dateRequest);
-    var promise, notifiedUserId;
+    var promise, notifiedUserId, starter;
     var userId = options && options.accessToken && options.accessToken.userId;
     var GZEDate = DateRequest.app.models.GZEDate;
     var dateId = dateRequest.date && dateRequest.date.id;
@@ -32,8 +32,10 @@ module.exports = function(DateRequest) {
     userId = (userId instanceof DateRequest.dataSource.ObjectID) ? userId.toJSON() : userId;
 
     if (dateRequest.sender && dateRequest.sender.id === userId) {
+      starter = 'senderStarted';
       notifiedUserId = dateRequest.recipient && dateRequest.recipient.id;
     } else if (dateRequest.recipient && dateRequest.recipient.id === userId) {
+      starter = 'recipientStarted';
       notifiedUserId = dateRequest.sender && dateRequest.sender.id;
     } else {
       console.error('DateRequest.startDate - Couldn\'t determine notifiedUserId');
@@ -53,11 +55,20 @@ module.exports = function(DateRequest) {
             throw error;
           }
 
-          return date.updateAttributes(
-            {
-              status: GZEDate.constants.status.progress
-            }
-          );
+          var newAttributes = {};
+          newAttributes[starter] = true;
+
+          return date.updateAttributes(newAttributes);
+        })
+        .then(function(date) {
+          var newStatus;
+          if (date.senderStarted && date.recipientStarted) {
+            newStatus = {status: GZEDate.constants.status.progress};
+          } else {
+            newStatus = {status: GZEDate.constants.status.starting};
+          }
+
+          return date.updateAttributes(newStatus);
         })
         .then(function(date) {
           dateRequest.date = date;
@@ -65,11 +76,10 @@ module.exports = function(DateRequest) {
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
           if (datesService) {
-            datesService.emitDateStarted(notifiedUserId, dateRequest);
+            datesService.emitDateStatusChanged(notifiedUserId, dateRequest);
           } else {
             console.error('DateRequest.startDate - datesService not available yet');
           }
-
 
           if (cb) {
             cb(null, dateRequest);
@@ -107,7 +117,7 @@ module.exports = function(DateRequest) {
 
   DateRequest.endDate = function(dateRequest, options, cb) {
     debug(dateRequest);
-    var promise, notifiedUserId;
+    var promise, notifiedUserId, ender;
     var userId = options && options.accessToken && options.accessToken.userId;
     var GoozeUser = DateRequest.app.models.GoozeUser;
     var GZEDate = DateRequest.app.models.GZEDate;
@@ -120,9 +130,11 @@ module.exports = function(DateRequest) {
     userId = (userId instanceof DateRequest.dataSource.ObjectID) ? userId.toJSON() : userId;
 
     if (dateRequest.sender && dateRequest.sender.id === userId) {
-      notifiedUserId = dateRequest.recipient && dateRequest.recipient.id;
+      ender = 'senderEnded';
+      notifiedUserId = recipientId;
     } else if (dateRequest.recipient && dateRequest.recipient.id === userId) {
-      notifiedUserId = dateRequest.sender && dateRequest.sender.id;
+      ender = 'recipientEnded';
+      notifiedUserId = senderId;
     } else {
       console.error('DateRequest.endDate - Couldn\'t determine notifiedUserId');
     }
@@ -149,14 +161,28 @@ module.exports = function(DateRequest) {
             throw error;
           }
 
-          return (
-            Promise.all([
-              DateRequest.updateAll({id: dateRequest.id}, {status: DateRequest.constants.status.ended}),
-              GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available}),
-              GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available}),
-              GZEDate.updateAll({id: dateId}, {status: GZEDate.constants.status.ended})
-            ])
-          );
+          var date = results[3];
+          var newAttributes = {};
+
+          newAttributes[ender] = true;
+
+          return date.updateAttributes(newAttributes);
+        })
+        .then(function(date) {
+          if (date.senderEnded && date.recipientEnded) {
+            return (
+              Promise.all([
+                DateRequest.updateAll({id: dateRequest.id}, {status: DateRequest.constants.status.ended}),
+                GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available}),
+                GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available}),
+                GZEDate.updateAll({id: dateId}, {status: GZEDate.constants.status.ended})
+              ])
+            );
+          } else {
+            return date.updateAttributes({
+              status: GZEDate.constants.status.ending
+            });
+          }
         })
         .then(function() {
           return DateRequest.findById(dateRequest.id);
@@ -167,7 +193,7 @@ module.exports = function(DateRequest) {
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
           if (datesService) {
-            datesService.emitDateEnded(notifiedUserId, updatedRequest);
+            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest);
           } else {
             console.error('DateRequest.endDate - datesService not available yet');
           }

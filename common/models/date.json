@@ -17,6 +17,26 @@
       "type": "string",
       "required": true,
       "default": "route"
+    },
+    "senderStarted": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "recipientStarted": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "senderEnded": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "recipientEnded": {
+      "type": "boolean",
+      "required": true,
+      "default": false
     }
   },
   "relations": {

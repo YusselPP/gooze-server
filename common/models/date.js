@@ -11,8 +11,10 @@ module.exports = function(GZEDate) {
     status: {
       route: 'route',
       progress: 'progress',
-      canceled: 'canceled',
-      ended: 'ended'
+      starting: 'starting',
+      ending: 'ending',
+      ended: 'ended',
+      canceled: 'canceled'
     }
   };
 

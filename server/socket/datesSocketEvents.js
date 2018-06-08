@@ -21,7 +21,8 @@ var events = {
   locationUpdateReceived: 'locationUpdateReceived',
 
   dateStarted: 'dateStarted',
-  dateEnded: 'dateEnded'
+  dateEnded: 'dateEnded',
+  dateStatusChanged: 'dateStatusChanged'
 };
 
 module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
@@ -32,8 +33,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
   channel.customService = {
     updateLocation: updateLocation,
-    emitDateStarted: emitDateStarted,
-    emitDateEnded: emitDateEnded
+    emitDateStatusChanged: emitDateStatusChanged
   };
 
   socket.on(events.findRequestById, function(data, callback) {
@@ -436,11 +436,11 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     callback(null, true);
   }
 
-  function emitDateStarted(toUserId, dateRequest) {
+  function emitDateStatusChanged(toUserId, dateRequest) {
     var recipientSockets;
 
     if (!toUserId) {
-      console.error('emitStartDate - undefined toUserId, .dateStarted event wont be emitted');
+      console.error('emitDateStatusChanged - undefined toUserId, .dateStatusChanged event wont be emitted');
       return;
     }
 
@@ -448,35 +448,13 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
     if (Array.isArray(recipientSockets)) {
       recipientSockets.forEach(function(recipientSocket) {
-        recipientSocket.emit(events.dateStarted, dateRequest, function ack() {
-          debug('emitStartDate - .dateStarted has been received');
+        recipientSocket.emit(events.dateStatusChanged, dateRequest, function ack() {
+          debug('emitDateStatusChanged - .dateStatusChanged has been received');
         });
-        debug('emitStartDate - Successfully emitted: .dateStarted event');
+        debug('emitDateStatusChanged - Successfully emitted: .dateStatusChanged event');
       });
     } else {
-      debug('emitStartDate - Recipient socket not found on connected clients list. dateStarted event not emitted');
-    }
-  }
-
-  function emitDateEnded(toUserId, dateRequest) {
-    var recipientSockets;
-
-    if (!toUserId) {
-      console.error('emitDateEnded - undefined toUserId, .dateEnded event wont be emitted');
-      return;
-    }
-
-    recipientSockets = clients[toUserId];
-
-    if (Array.isArray(recipientSockets)) {
-      recipientSockets.forEach(function(recipientSocket) {
-        recipientSocket.emit(events.dateEnded, dateRequest, function ack() {
-          debug('emitDateEnded - .dateEnded has been received');
-        });
-        debug('emitDateEnded - Successfully emitted: .dateEnded event');
-      });
-    } else {
-      debug('emitDateEnded - Recipient socket not found on connected clients list. dateEnded event not emitted');
+      debug('emitDateStatusChanged - Recipient socket not found on connected clients list. dateStatusChanged event not emitted');
     }
   }
 };
