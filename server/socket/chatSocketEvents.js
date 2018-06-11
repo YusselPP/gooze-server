@@ -67,13 +67,13 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
           debug('requestAmount - Recipient socket not found on connected clients list. Amount request not emitted');
         }
 
-        handleSendMessage([message, username, chatJson, dateRequestId, mode], function(err, sentMessage) {
+        handleSendMessage([message, username, chatJson, dateRequest, mode], function(err, sentMessage) {
           if (err) {
             debug('requestAmount - Failed to send amount message');
             throw err;
           }
           debug('requestAmount - Amount message sent successfully');
-          callback(null, sentMessage);
+          callback(null, sentMessage, dateRequest.toJSON());
         });
       })
       .catch(function(err) {
@@ -129,7 +129,7 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
     var message = data[0];
     var username = data[1];
     var chatJson = data[2];
-    var dateRequestId = data[3];
+    var dateRequest = data[3];
     var mode = data[4];
 
     if (typeof message !== 'object') {
@@ -169,7 +169,7 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
         recipientSockets = clients[recipientId];
         if (Array.isArray(recipientSockets)) {
           recipientSockets.forEach(function(recipientSocket) {
-            recipientSocket.emit(events.messageReceived, chatMessageJson, username, chatJson, dateRequestId, mode, function ack() {
+            recipientSocket.emit(events.messageReceived, chatMessageJson, username, chatJson, dateRequest, mode, function ack() {
               debug('sendMessage - Recipient has received the message');
 
               if (!isStatusReceived) {

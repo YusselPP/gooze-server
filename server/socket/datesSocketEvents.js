@@ -380,7 +380,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           debug(funcName + ' - Recipient socket not found on connected clients list. createChargeSuccess not emitted');
         }
 
-        chatService.sendMessage([message, username, chatJson, dateRequestId, mode], function(err) {
+        chatService.sendMessage([message, username, chatJson, dateRequestJson, mode], function(err) {
           if (err) {
             debug(funcName + ' - Failed to send createChargeSuccess message');
             return;
