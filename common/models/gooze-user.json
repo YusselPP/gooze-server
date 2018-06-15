@@ -98,7 +98,7 @@
   },
   "validations": [],
   "scope": {
-    "include": [ "comments"]
+    "include": [ "comments", "payment"]
   },
   "relations": {
     "accessTokens": {
@@ -131,6 +131,11 @@
       "scope": {
         "include": "comment"
       }
+    },
+    "payment": {
+      "type": "hasOne",
+      "model": "Payment",
+      "foreignKey": "userId"
     }
   },
   "acls": [

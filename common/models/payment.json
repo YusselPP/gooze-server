@@ -1,9 +1,29 @@
 {
   "name": "Payment",
-  "base": "Model",
-  "properties": {},
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "validateUpsert": true,
+      "required": true
+    }
+  },
+  "properties": {
+    "paypalCustomerId": {
+      "type": "string"
+    }
+  },
   "validations": [],
-  "relations": {},
+  "relations": {
+    "user": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "userId"
+    }
+  },
   "acls": [
     {
       "principalType": "ROLE",
@@ -16,6 +36,47 @@
       "permission": "ALLOW",
       "accessType": "EXECUTE",
       "property": "createCustomer"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "findCustomer"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "findPaymentMethods"
+    },{
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "createPaymentMethod"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "deletePaymentMethod"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "clientToken"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "createCharge"
     }
   ],
   "scopes": {},

@@ -11,6 +11,7 @@
     "posttest": "npm run lint && nsp check"
   },
   "dependencies": {
+    "braintree": "^2.11.0",
     "compression": "^1.0.3",
     "conekta": "^3.5.1",
     "cors": "^2.5.2",

@@ -94,13 +94,19 @@
     "public": false
   },
   "Payment": {
-    "dataSource": "db",
+    "dataSource": "mongoDs",
     "public": true,
     "options": {
       "remoting": {
         "sharedMethods": {
           "*": false,
-          "createCustomer": true
+          "createCustomer": true,
+          "findCustomer": true,
+          "findPaymentMethods": true,
+          "createPaymentMethod": true,
+          "deletePaymentMethod": true,
+          "clientToken": true,
+          "createCharge": true
         }
       }
     }

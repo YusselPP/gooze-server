@@ -497,7 +497,7 @@ module.exports = function(GoozeUser) {
 
   // username case insensitive
   GoozeUser.setter.username = function(value) {
-    this.$username = value.toLowerCase();
+    this.$username = value.toUpperCase();
   };
 
   GoozeUser.observe('access', function normalizeUsernameCase(ctx, next) {
@@ -505,7 +505,7 @@ module.exports = function(GoozeUser) {
     var usernameParent = findObjectWithProperty(ctx.query.where, 'username');
     debug('username parent: ' + JSON.stringify(usernameParent));
     if (usernameParent && typeof(usernameParent.username) === 'string') {
-      usernameParent.username = usernameParent.username.toLowerCase();
+      usernameParent.username = usernameParent.username.toUpperCase();
       debug('new username set: ' + usernameParent.username);
     }
     next();
