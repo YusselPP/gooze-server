@@ -1,4 +1,5 @@
 {
+  "staticPath": "/staging",
   "restApiRoot": "/staging/api",
   "port": 3001
 }

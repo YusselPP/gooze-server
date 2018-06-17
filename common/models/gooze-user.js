@@ -316,7 +316,7 @@ module.exports = function(GoozeUser) {
     var parsedRatings = Object.keys(GoozeUser.constants.ratings).reduce(function(result, rateKey) {
       var rate = ratings[rateKey];
 
-      if (rate > 0) {
+      if (rate >= 0) {
         result[rateKey + '.value'] = Math.min(rate, GoozeUser.constants.maxRateValue);
         result[rateKey + '.count'] = 1;
       }

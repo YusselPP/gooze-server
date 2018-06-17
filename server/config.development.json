@@ -1,4 +1,5 @@
 {
+  "staticPath": "/development",
   "restApiRoot": "/development/api",
   "port": 3000
 }
