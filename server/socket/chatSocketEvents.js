@@ -1,6 +1,7 @@
 'use strict';
 
 var debug = require('debug')('gooze:chat-socket-events');
+var apns = require('../../common/services/apns/apns-service');
 
 var events = {
   sendMessage: 'sendMessage',
@@ -10,7 +11,7 @@ var events = {
   requestAmount: 'requestAmount',
   amountRequestReceived: 'amountRequestReceived',
 
-  retrieveMessages: 'retrieveMessages',
+  retrieveMessages: 'retrieveMessages'
 };
 
 module.exports = function addChatSocketEvents(socket, clients, app, channel) {
@@ -166,6 +167,15 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
         debug('sendMessage - Persisted message: ' + JSON.stringify(chatMessageJson));
 
         debug('sendMessage - Emitting message: ' + JSON.stringify(chatMessageJson));
+
+        apns.send(app.apnsProvider, recipientId, {
+          alert: text,
+          badge: 1
+          /* payload: {
+            foo: 'bar'
+          } */
+        });
+
         recipientSockets = clients[recipientId];
         if (Array.isArray(recipientSockets)) {
           recipientSockets.forEach(function(recipientSocket) {

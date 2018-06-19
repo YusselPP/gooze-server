@@ -1,0 +1,48 @@
+{
+  "name": "DeviceToken",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "required": true
+    }
+  },
+  "properties": {
+    "vendorId": {
+      "type": "string",
+      "id": true,
+      "required": true
+    },
+    "token": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "user": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "userId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accesType": "EXECUTE",
+      "property": "patchOrCreate"
+    }
+  ],
+  "scopes": {},
+  "methods": {}
+}
