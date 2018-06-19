@@ -94,6 +94,9 @@
     },
     "activeUntil": {
       "type": "date"
+    },
+    "facebookId": {
+      "type": "string"
     }
   },
   "validations": [],
@@ -145,6 +148,13 @@
       "permission": "ALLOW",
       "accessType": "READ",
       "property": "count"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "facebookLogin"
     },
     {
       "principalType": "ROLE",

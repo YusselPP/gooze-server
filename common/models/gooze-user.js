@@ -1,6 +1,7 @@
 'use strict';
 
 var debug = require('debug')('gooze:gooze-user');
+var https = require('https');
 
 /**
  *
@@ -456,6 +457,110 @@ module.exports = function(GoozeUser) {
       }
     ],
     returns: {root: true, type: 'boolean'}
+  });
+
+  GoozeUser.facebookLogin = function(token, cb) {
+    debug(JSON.stringify(token));
+
+    https.get('https://graph.facebook.com/v3.0/me?fields=email&access_token=' + token, function(res) {
+      var error;
+      var data = [];
+
+      debug('statusCode:', res.statusCode);
+      debug('headers:', res.headers);
+
+      if (!(res.statusCode >= 200 && res.statusCode < 300)) {
+        error = new Error();
+        error.statusCode = res.statusCode;
+        error.message = res.statusMessage;
+      }
+
+      res.setEncoding('utf8');
+
+      res.on('data', function(chunk) {
+        data.push(chunk);
+      });
+
+      res.on('end', function() {
+        var response = data.join('');
+
+        debug(response);
+
+        try {
+          response = JSON.parse(response);
+        } catch (e) {
+          error = e;
+        }
+
+        if (error) {
+          error.details = response.error;
+          cb(error);
+        } else {
+          GoozeUser.findOne({
+            where: {
+              facebookId: response.id
+            }
+          })
+            .then(function(user) {
+              if (!user) {
+                return (
+                  GoozeUser.findOne({
+                    where: {
+                      email: response.email
+                    }
+                  }).then(function(user) {
+                    if (!user) {
+                      error = new Error();
+                      error.statusCode = 404;
+                      error.message = 'No se encontró ninguna cuenta asociada con este facebook';
+                      error.code = 'FB_LOGIN_MODEL_NOT_FOUND';
+                      // error.details = response;
+                      throw error;
+                    }
+
+                    return user.updateAttributes({facebookId: response.id});
+                  })
+                );
+              }
+
+              return user;
+            })
+            .then(function(user) {
+              if (!user) {
+                error = new Error();
+                error.statusCode = 404;
+                error.message = 'No se encontró ninguna cuenta asociada con este facebook';
+                error.code = 'FB_LOGIN_MODEL_NOT_FOUND';
+                // error.details = response;
+                throw error;
+              }
+
+              user.createAccessToken(1209600, function(error, accessToken) {
+                if (error) {
+                  throw error;
+                }
+
+                var tokenJson = accessToken.toJSON();
+                tokenJson.user = user.toJSON();
+
+                cb(null, tokenJson);
+              });
+            })
+            .catch(function(error) {
+              console.error(error);
+              cb(error);
+            });
+        }
+      });
+    });
+  };
+
+  GoozeUser.remoteMethod('facebookLogin', {
+    http: {verb: 'post'},
+    accepts: [
+      {arg: 'token', type: 'string', required: true, http: {source: 'query'}}
+    ],
+    returns: {arg: 'accessToken', type: 'object', root: true}
   });
 
   var userLogin = GoozeUser.login;
