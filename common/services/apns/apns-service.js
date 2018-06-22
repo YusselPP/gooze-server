@@ -31,12 +31,6 @@ function send(provider, userId, notification) {
   var note = new apn.Notification();
   var alert = notification.alert;
 
-  if (typeof alert === 'string') {
-    alert = alert.substring(0, Math.min(alert.length, MAX_ALERT_LENGTH));
-  } else {
-    alert = undefined;
-  }
-
   note.alert = alert;
   note.badge = notification.badge;
   note.payload = notification.payload;
@@ -47,7 +41,7 @@ function send(provider, userId, notification) {
   getDeviceTokens(userId)
     .then(function(tokens) {
       return provider.send(note, tokens).then(function(result) {
-        debug(result.failed);
+        debug('failed tokens: ', result.failed);
         debug('removing inactive(HTTP error 410) tokens from db');
         var devicesToRemove = result.failed.reduce(function(result, failed) {
           if (failed.error.statusCode === 410) {
@@ -56,7 +50,9 @@ function send(provider, userId, notification) {
           return result;
         }, []);
 
-        removeInactiveDeviceTokens(devicesToRemove);
+        if (devicesToRemove.length > 0) {
+          removeInactiveDeviceTokens(devicesToRemove);
+        }
       });
     })
     .catch(function(reason) {
@@ -98,13 +94,13 @@ function removeInactiveDeviceTokens(deviceTokens) {
     })
       .then(function(err, info) {
         if (err) {
-          console.log(err);
+          console.error(err);
           return;
         }
         debug(info);
       })
       .catch(function(reason) {
-        console.log(reason);
+        console.error(reason);
       })
   );
 }

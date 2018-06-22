@@ -30,6 +30,10 @@
       "type": "string",
       "default": null
     },
+    "searchForGender": {
+      "type": "array",
+      "default": []
+    },
     "weight": {
       "type": "number"
     },
@@ -79,7 +83,7 @@
     "status": {
       "type": "string",
       "required": true,
-      "default": "unavailable"
+      "default": "available"
     },
     "loggedIn": {
       "type": "boolean",

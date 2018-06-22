@@ -168,14 +168,6 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
 
         debug('sendMessage - Emitting message: ' + JSON.stringify(chatMessageJson));
 
-        apns.send(app.apnsProvider, recipientId, {
-          alert: text,
-          badge: 1
-          /* payload: {
-            foo: 'bar'
-          } */
-        });
-
         recipientSockets = clients[recipientId];
         if (Array.isArray(recipientSockets)) {
           recipientSockets.forEach(function(recipientSocket) {
@@ -202,6 +194,19 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
         } else {
           debug('sendMessage - Recipient socket not found on connected clients list. Message not emitted');
         }
+
+        var localizedText = chatMessage.gzeLocalizedText();
+
+        debug(localizedText);
+
+        apns.send(app.apnsProvider, recipientId, {
+          alert: {
+            'title': username,
+            'loc-key': localizedText.text,
+            'loc-args': localizedText.args
+          },
+          badge: 1
+        });
 
         callback(null, chatMessageJson);
       })

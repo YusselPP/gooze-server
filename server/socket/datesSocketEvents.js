@@ -343,7 +343,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
               },
               {
                 status: GoozeUser.constants.status.onDate,
-                mode: mode === 'client' ? 'gooze' : 'client'
+                mode: mode === 'client' ? 'gooze' : 'client',
+                activeUntil: null
               }),
             GoozeUser.updateAll(
               {

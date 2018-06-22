@@ -9,6 +9,11 @@ var https = require('https');
  */
 module.exports = function(GoozeUser) {
   GoozeUser.constants = {
+    gender: {
+      male: 'male',
+      female: 'female',
+      other: 'other'
+    },
     status: {
       available: 'available',
       unavailable: 'unavailable',
@@ -24,7 +29,27 @@ module.exports = function(GoozeUser) {
     maxRateValue: 5
   };
 
-  GoozeUser.validatesInclusionOf('gender', {in: ['male', 'female', 'other'], allowNull: true});
+  GoozeUser.validatesInclusionOf('gender', {in: Object.keys(GoozeUser.constants.gender), allowNull: true});
+  GoozeUser.validate(
+    'searchForGender',
+    function customValidator(err) {
+      if (!Array.isArray(this.searchForGender)) {
+        err();
+        return;
+      }
+
+      var genders = Object.keys(GoozeUser.constants.gender);
+      var hasInvalidValues = this.searchForGender.some(function(value) {
+        return genders.indexOf(value) === -1;
+      });
+
+      if (hasInvalidValues) {
+        err();
+      }
+    },
+    {message: 'Gender search must be a sub-array of: ' + Object.keys(GoozeUser.constants.gender).join(', ')}
+  );
+
   GoozeUser.validatesInclusionOf('status', {in: Object.keys(GoozeUser.constants.status)});
   GoozeUser.validatesInclusionOf('mode', {in: ['gooze', 'client']});
 
@@ -62,105 +87,118 @@ module.exports = function(GoozeUser) {
     }
 
     var promise = (
-      Promise.all([
-        GoozeUser.find({
-          where: where,
-          fields: [
-            'id',
-            'username',
-            'email',
-            'searchPic',
-            'profilePic',
-            'currentLocation',
-            'imagesRating',
-            'complianceRating',
-            'dateQualityRating',
-            'dateRating',
-            'goozeRating'
-          ],
-          limit: limit || 5
-        }),
-        DateRequest.find({
-          where: {
-            senderId: userId,
-            recipientClosed: false,
-            or: [
-              {status: DateRequest.constants.status.sent},
-              {status: DateRequest.constants.status.received},
-              {status: DateRequest.constants.status.accepted},
-              {status: DateRequest.constants.status.onDate}
-            ]
+      GoozeUser.findById(userId)
+        .then(function(user) {
+          var searchForGender = user && user.searchForGender;
+
+          if (searchForGender && searchForGender.length > 0) {
+            where.gender = {
+              inq: searchForGender
+            };
           }
-        }),
-        GoozeUser.updateAll(
-          {
-            id: userId
-          },
-          {
-            dateLocation: location
-          }
-        )
-      ]).then(function(result) {
-        var users = result[0];
-        var dateRequests = result[1];
 
-        if (dateRequests && dateRequests.length > 0) {
-          debug('findByLocation - found ' + dateRequests.length + ' unresponded requests.');
-
-          var convertibleUsers = users.map(function(user) {
-            var userDateReq;
-            var userId = user.id instanceof ObjectID ? user.id.toJSON() : user.id;
-
-            debug('userId: ' + userId);
-
-            dateRequests
-              .some(function(dateReq, index, array) {
-                var recipientId = dateReq.recipientId;
-
-                recipientId = (
-                  (recipientId instanceof DateRequest.dataSource.ObjectID) ?
-                    recipientId.toJSON() :
-                    recipientId
-                );
-
-                var exists = recipientId === userId;
-
-                if (exists) {
-                  debug('user: ' + user.id + ' converted to request: ' + dateReq.id);
-                  userDateReq = dateReq;
-                  array.splice(index, 1);
+          return (
+            Promise.all([
+              GoozeUser.find({
+                where: where,
+                fields: [
+                  'id',
+                  'username',
+                  'email',
+                  'searchPic',
+                  'profilePic',
+                  'currentLocation',
+                  'imagesRating',
+                  'complianceRating',
+                  'dateQualityRating',
+                  'dateRating',
+                  'goozeRating'
+                ],
+                limit: limit || 5
+              }),
+              DateRequest.find({
+                where: {
+                  senderId: userId,
+                  recipientClosed: false,
+                  or: [
+                    {status: DateRequest.constants.status.sent},
+                    {status: DateRequest.constants.status.received},
+                    {status: DateRequest.constants.status.accepted},
+                    {status: DateRequest.constants.status.onDate}
+                  ]
                 }
+              }),
+              GoozeUser.updateAll(
+                {
+                  id: userId
+                },
+                {
+                  dateLocation: location
+                }
+              )
+            ])
+          );
+        }).then(function(result) {
+          var users = result[0];
+          var dateRequests = result[1];
 
-                return exists;
-              });
+          if (dateRequests && dateRequests.length > 0) {
+            debug('findByLocation - found ' + dateRequests.length + ' unresponded requests.');
 
-            if (userDateReq) {
-              return userDateReq;
-            } else {
-              return user;
+            var convertibleUsers = users.map(function(user) {
+              var userDateReq;
+              var userId = user.id instanceof ObjectID ? user.id.toJSON() : user.id;
+
+              debug('userId: ' + userId);
+
+              dateRequests
+                .some(function(dateReq, index, array) {
+                  var recipientId = dateReq.recipientId;
+
+                  recipientId = (
+                    (recipientId instanceof DateRequest.dataSource.ObjectID) ?
+                      recipientId.toJSON() :
+                      recipientId
+                  );
+
+                  var exists = recipientId === userId;
+
+                  if (exists) {
+                    debug('user: ' + user.id + ' converted to request: ' + dateReq.id);
+                    userDateReq = dateReq;
+                    array.splice(index, 1);
+                  }
+
+                  return exists;
+                });
+
+              if (userDateReq) {
+                return userDateReq;
+              } else {
+                return user;
+              }
+            });
+
+            if (cb) {
+              cb(null, convertibleUsers);
             }
-          });
-
-          if (cb) {
-            cb(null, convertibleUsers);
-          }
-          return convertibleUsers;
-        } else {
-          debug('findByLocation - no unresponded requests found.');
-          if (cb) {
-            cb(null, users);
-          }
-          return users;
-        }
-      })
-        .catch(function(err) {
-          if (cb) {
-            cb(err);
+            return convertibleUsers;
           } else {
-            throw err;
+            debug('findByLocation - no unresponded requests found.');
+            if (cb) {
+              cb(null, users);
+            }
+            return users;
           }
         })
-    );
+          .catch(function(err) {
+            if (cb) {
+              cb(err);
+            } else {
+              throw err;
+            }
+          })
+      );
 
     if (!cb) {
       return promise;
@@ -585,6 +623,9 @@ module.exports = function(GoozeUser) {
 
   GoozeUser.afterRemote('login', function(context, token, next) {
     debug('after login hook called. Removing expired access tokens');
+    var req = context && context.req;
+    var accessToken = req && req.accessToken;
+    var userId = accessToken ? accessToken.userId : undefined;
 
     GoozeUser.app.models.GoozeAccessToken.destroyAll({
       expires: {
@@ -592,6 +633,31 @@ module.exports = function(GoozeUser) {
       }
     }, function(err, tokens) {
       debug('err: ' + (err && err.message) + ', info: ' + JSON.stringify(tokens));
+    });
+
+    next();
+  });
+
+  GoozeUser.afterRemote('logout', function(context, token, next) {
+    var req = context && context.req;
+    var accessToken = req && req.accessToken;
+    var userId = accessToken ? accessToken.userId : undefined;
+
+    debug('after logout hook called. Invalidating active until from user[=id' + userId + ']');
+
+    if (!userId) {
+      console.warn('after logout - logout called without userId');
+      return;
+    }
+
+    GoozeUser.updateAll({id: userId}, {
+      activeUntil: null
+    }, function(err, user) {
+      if (err) {
+        console.error(err);
+        return;
+      }
+      debug('after logout: user deactivated', user.activeUntil);
     });
 
     next();
