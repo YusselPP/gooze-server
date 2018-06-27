@@ -75,7 +75,16 @@
   },
   "ChatMessage": {
     "dataSource": "mongoDs",
-    "public": false
+    "public": true,
+    "options": {
+      "remoting": {
+        "sharedMethods": {
+          "*": false,
+          "updateAll": true,
+          "count": true
+        }
+      }
+    }
   },
   "Chat": {
     "dataSource": "mongoDs",

@@ -91,9 +91,15 @@
     },
     {
       "principalType": "ROLE",
-      "principalId": "$authenticated",
+      "principalId": "chatOwners",
       "permission": "ALLOW",
-      "property": "find"
+      "property": "updateAll"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "chatOwners",
+      "permission": "ALLOW",
+      "property": "count"
     }
   ],
   "methods": {}
