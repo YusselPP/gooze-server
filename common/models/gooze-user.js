@@ -344,6 +344,94 @@ module.exports = function(GoozeUser) {
     returns: {arg: 'updated', type: 'boolean'}
   });
 
+  GoozeUser.unreadMessagesCount = function(userId, mode, cb) {
+    var Chat = GoozeUser.app.models.Chat;
+    var ChatMessage = Chat.app.models.ChatMessage;
+    var DateRequest = Chat.app.models.DateRequest;
+    var ObjectID = ChatMessage.dataSource.ObjectID;
+
+    debug('unreadMessagesCount - userId:', userId, ', mode:', mode);
+    debug('unreadMessagesCount - typeof userId', typeof userId);
+
+    var objectId = ObjectID(userId);
+
+    var where = {
+      or: [
+        {status: DateRequest.constants.status.sent},
+        {status: DateRequest.constants.status.received},
+        {status: DateRequest.constants.status.accepted},
+        {status: DateRequest.constants.status.onDate}
+      ]
+    };
+
+    if (mode === 'gooze') {
+      where.recipientId = objectId;
+      where.recipientClosed = false;
+    } else {
+      where.senderId = objectId;
+      where.senderClosed = false;
+    }
+
+    var promise = (
+      DateRequest.find({
+        where: where,
+        fields: ['chatId']
+      }).then(function(dateRequests) {
+        debug('unreadMessagesCount - dateRequests', dateRequests);
+        return dateRequests.map(function(dateRequest) {
+          return dateRequest.chatId;
+        });
+      }).then(function(chatIds) {
+        debug('unreadMessagesCount - chatIds', chatIds);
+        if (chatIds.length <= 0) {
+          return {};
+        }
+
+        return Promise.all(
+          chatIds.map(function(chatId) {
+            return (
+              ChatMessage.count({
+                chatId: chatId,
+                senderId: {neq: userId},
+                status: {neq: ChatMessage.constants.status.read}
+              })
+            );
+          })
+        ).then(function(counts) {
+          debug('unreadMessagesCount - counts', counts);
+          return (
+            chatIds.reduce(function(result, chatId, index) {
+
+              result[chatId] = counts[index];
+
+              return result;
+            }, {})
+          );
+        });
+      })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise.then(function(groupedCount) {
+      debug('unreadMessagesCount - groupedCount', groupedCount);
+      cb(null, groupedCount);
+    }).catch(function(err) {
+      cb(err);
+    });
+  };
+
+  GoozeUser.remoteMethod('unreadMessagesCount', {
+    http: {verb: 'get', path: '/:id/unreadMessagesCount'},
+    accepts: [
+      {arg: 'id', type: 'string', required: true},
+      {arg: 'mode', type: 'string', required: true, http: {source: 'query'}}
+    ],
+    returns: {root: true, type: 'object'}
+  });
+
   GoozeUser.addRate = function(userId, ratings, cb) {
     debug(userId, ratings);
     var GZERateComment = GoozeUser.app.models.GZERateComment;
