@@ -37,6 +37,16 @@
       "type": "boolean",
       "required": true,
       "default": false
+    },
+    "senderCanceled": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "recipientCanceled": {
+      "type": "boolean",
+      "required": true,
+      "default": false
     }
   },
   "relations": {

@@ -231,4 +231,112 @@ module.exports = function(DateRequest) {
     ],
     returns: {type: 'DateRequest', root: true}
   });
+
+  DateRequest.cancelDate = function(dateRequest, options, cb) {
+    debug(dateRequest);
+    var promise, notifiedUserId, ender;
+    var userId = options && options.accessToken && options.accessToken.userId;
+    var GoozeUser = DateRequest.app.models.GoozeUser;
+    var GZEDate = DateRequest.app.models.GZEDate;
+
+    var dateId = dateRequest.date && dateRequest.date.id;
+    var senderId = dateRequest.sender && dateRequest.sender.id;
+    var recipientId = dateRequest.recipient && dateRequest.recipient.id;
+
+    cb = typeof cb === 'function' ? cb : undefined;
+    userId = (userId instanceof DateRequest.dataSource.ObjectID) ? userId.toJSON() : userId;
+
+    if (dateRequest.sender && dateRequest.sender.id === userId) {
+      ender = 'senderCanceled';
+      notifiedUserId = recipientId;
+    } else if (dateRequest.recipient && dateRequest.recipient.id === userId) {
+      ender = 'recipientCanceled';
+      notifiedUserId = senderId;
+    } else {
+      console.error('DateRequest.cancelDate - Couldn\'t determine notifiedUserId');
+    }
+
+    promise = (
+      Promise.all([
+        DateRequest.findById(dateRequest.id),
+        GoozeUser.findById(senderId),
+        GoozeUser.findById(recipientId),
+        GZEDate.findById(dateId)
+      ])
+        .then(function(results) {
+          if (results.some(function(model) { return !model; })) {
+            debug('cancelDate - Model not found');
+            var error = new Error('Model not found');
+            error.statusCode = error.status = 404;
+            error.code = 'MODEL_NOT_FOUND';
+            error.details = {
+              dateRequestId: dateRequest.id,
+              senderId: senderId,
+              recipientId: recipientId,
+              dateId: dateId
+            };
+            throw error;
+          }
+
+          var date = results[3];
+          var newAttributes = {};
+
+          newAttributes[ender] = true;
+
+          return date.updateAttributes(newAttributes);
+        })
+        .then(function() {
+          return (
+            Promise.all([
+              DateRequest.updateAll({id: dateRequest.id}, {status: DateRequest.constants.status.ended}),
+              GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available}),
+              GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available}),
+              GZEDate.updateAll({id: dateId}, {status: GZEDate.constants.status.canceled})
+            ])
+          );
+        })
+        .then(function() {
+          return DateRequest.findById(dateRequest.id);
+        })
+        .then(function(updatedRequest) {
+          debug(updatedRequest);
+
+          var datesService = DateRequest.app.datesSocketChannel.customService;
+
+          if (datesService) {
+            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest);
+          } else {
+            console.error('DateRequest.cancelDate - datesService not available yet');
+          }
+
+          return updatedRequest;
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function(updatedRequest) {
+        cb(null, updatedRequest);
+      })
+      .catch(function(reason) {
+        cb(reason);
+      });
+  };
+
+  DateRequest.remoteMethod('cancelDate', {
+    http: {verb: 'post'},
+    accepts: [
+      {
+        arg: 'dateRequest',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      },
+      {arg: 'options', type: 'object', http: 'optionsFromRequest'}
+    ],
+    returns: {type: 'DateRequest', root: true}
+  });
 };
