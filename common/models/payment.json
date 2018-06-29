@@ -77,6 +77,13 @@
       "permission": "ALLOW",
       "accessType": "EXECUTE",
       "property": "createCharge"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "testPaypal"
     }
   ],
   "scopes": {},

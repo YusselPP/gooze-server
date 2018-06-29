@@ -1,0 +1,60 @@
+{
+  "name": "UserTransaction",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "required": true
+    }
+  },
+  "properties": {
+    "amount": {
+      "type": "number",
+      "required": true
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "paymentMethod": {
+      "type": "string",
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "dateRequest": {
+      "type": "belongsTo",
+      "model": "DateRequest",
+      "foreignKey": "dateRequestId"
+    },
+    "fromUser": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "fromUserId"
+    },
+    "toUser": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "toUserId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "find"
+    }
+  ],
+  "scopes": {},
+  "methods": {}
+}

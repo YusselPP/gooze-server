@@ -116,7 +116,8 @@
           "createPaymentMethod": true,
           "deletePaymentMethod": true,
           "clientToken": true,
-          "createCharge": true
+          "createCharge": true,
+          "testPaypal": true
         }
       }
     }
@@ -124,6 +125,18 @@
   "DeviceToken": {
     "dataSource": "mongoDs",
     "public": true
+  },
+  "UserTransaction": {
+    "dataSource": "mongoDs",
+    "public": true,
+    "options": {
+      "remoting": {
+        "sharedMethods": {
+          "*": false,
+          "find": true
+        }
+      }
+    }
   },
   "container": {
     "dataSource": "storage",

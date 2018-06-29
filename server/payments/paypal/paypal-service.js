@@ -54,7 +54,10 @@ function createCharge(sale) {
         paymentMethodToken: sale.paymentMethodToken,
         deviceData: sale.deviceData,
         options: {
-          submitForSettlement: true
+          submitForSettlement: true,
+          paypal: {
+            description: sale.description
+          }
         }
       }, function(err, response) {
         debug(err, response);

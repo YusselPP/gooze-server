@@ -209,8 +209,36 @@ module.exports = function(Payment) {
   });
 
   Payment.createCharge = function(sale, cb) {
+    var UserTransaction = Payment.app.models.UserTransaction;
     debug('createCharge - request: ', sale);
-    var promise = PayPalService.createCharge(sale);
+    var promise = (
+        PayPalService.createCharge(sale)
+          .then(function(response) {
+            var promise = Promise.resolve(response);
+
+            if (response.success) {
+              var transaction = response.transaction;
+
+              var userTransaction = {
+                fromUserId: sale.fromUserId,
+                toUserId: sale.toUserId,
+                dateRequestId: sale.dateRequestId,
+                amount: transaction.amount,
+                status: transaction.status,
+                paymentMethod: 'paypal'
+              };
+
+              promise = (
+                UserTransaction.create(userTransaction)
+                  .then(function() {
+                    return response;
+                  })
+              );
+            }
+
+            return promise;
+          })
+    );
 
     if (cb) {
       promise
