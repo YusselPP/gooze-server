@@ -357,8 +357,6 @@ module.exports = function(GoozeUser) {
 
     var where = {
       or: [
-        {status: DateRequest.constants.status.sent},
-        {status: DateRequest.constants.status.received},
         {status: DateRequest.constants.status.accepted},
         {status: DateRequest.constants.status.onDate}
       ]
@@ -380,6 +378,8 @@ module.exports = function(GoozeUser) {
         debug('unreadMessagesCount - dateRequests', dateRequests);
         return dateRequests.map(function(dateRequest) {
           return dateRequest.chatId;
+        }).filter(function(chatId) {
+          return chatId !== undefined || chatId !== null;
         });
       }).then(function(chatIds) {
         debug('unreadMessagesCount - chatIds', chatIds);
@@ -583,6 +583,53 @@ module.exports = function(GoozeUser) {
       }
     ],
     returns: {root: true, type: 'boolean'}
+  });
+
+  GoozeUser.sendEmail = function(mail, options, cb) {
+    var error;
+    var userId = options && options.accessToken && options.accessToken.userId;
+
+    debug(mail);
+
+    GoozeUser.findById(userId)
+      .then(function(user) {
+        if (!user) {
+          error = new Error();
+          error.statusCode = 404;
+          error.message = 'User not found';
+          error.code = 'NOT_FOUND';
+          throw error;
+        }
+
+        GoozeUser.app.models.Email.send({
+          to: process.env.GMAIL_USER,
+          subject: user.username + ' - ' + user.email + ': ' + mail.mail.subject,
+          text: mail.mail.text
+        }, function(err) {
+          if (!err) {
+            console.log('email sent!');
+          }
+          cb(err);
+        });
+      })
+      .catch(function(reason) {
+        cb(reason);
+      });
+  };
+
+  GoozeUser.remoteMethod('sendEmail', {
+    http: {
+      verb: 'post'
+    },
+    accepts: [
+      {
+        arg: 'mail',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      },
+      {arg: 'options', type: 'object', http: 'optionsFromRequest'}
+    ]
   });
 
   GoozeUser.facebookLogin = function(token, cb) {

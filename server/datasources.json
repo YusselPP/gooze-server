@@ -19,5 +19,19 @@
     "connector": "loopback-component-storage",
     "provider": "filesystem",
     "root": "./server/storage"
+  },
+  "gmail": {
+    "name": "gmail",
+    "connector": "mail",
+    "transports": [{
+      "type": "smtp",
+      "host": "smtp.gmail.com",
+      "secure": true,
+      "port": 465,
+      "auth": {
+        "user": "${GMAIL_USER}",
+        "pass": "${GMAIL_PWD}"
+      }
+    }]
   }
 }

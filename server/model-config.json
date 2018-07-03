@@ -141,5 +141,8 @@
   "container": {
     "dataSource": "storage",
     "public": true
+  },
+  "Email": {
+    "dataSource": "gmail"
   }
 }
