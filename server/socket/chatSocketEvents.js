@@ -165,6 +165,7 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
         var isStatusReceived = false;
         var chatMessageJson = chatMessage.toJSON();
         debug('sendMessage - Persisted message: ' + JSON.stringify(chatMessageJson));
+        callback(null, chatMessageJson);
 
         debug('sendMessage - Emitting message: ' + JSON.stringify(chatMessageJson));
 
@@ -207,8 +208,6 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
           },
           badge: 1
         });
-
-        callback(null, chatMessageJson);
       })
       .catch(function(err) {
         debug(err);
