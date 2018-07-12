@@ -1,6 +1,7 @@
 'use strict';
 
 var debug = require('debug')('gooze:dates-socket-events');
+var apns = require('../../common/services/apns/apns-service');
 
 var oneChatPerRequest = true;
 
@@ -175,6 +176,15 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         } else {
           debug('dateRequestSent - Recipient socket not found on connected clients list. DateRequest not emitted');
         }
+
+        apns.send(app.apnsProvider, recipientId, {
+          alert: {
+            'loc-key': 'service.dates.requestReceived',
+            'loc-args': [sentRequest.sender.username]
+          },
+          badge: 1
+        });
+
         callback(null, sentRequest);
       })
       .catch(function(err) {
@@ -287,6 +297,15 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         } else {
           debug('acceptRequest - Sender socket not found on connected clients list. requestAccepted not emitted');
         }
+
+        apns.send(app.apnsProvider, senderId, {
+          alert: {
+            'loc-key': 'service.dates.requestAccepted',
+            'loc-args': [dateRequestJson.recipient.username]
+          },
+          badge: 1
+        });
+
         callback(null, dateRequestJson);
       })
       .catch(function(err) {
