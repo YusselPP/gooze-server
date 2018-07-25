@@ -426,8 +426,9 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     var error, recipientSockets;
     var recipientId = data[0];
     var user = data[1];
+    var isArriving = data[2];
 
-    debug(user);
+    debug(user, isArriving);
 
     GoozeUser.updateAll(
       {
@@ -453,6 +454,17 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     } else {
       debug(funcName + ' - Recipient socket not found on connected clients list. locationUpdateReceived not emitted');
     }
+
+    if (isArriving) {
+      apns.send(app.apnsProvider, recipientId, {
+        alert: {
+          'loc-key': 'vm.map.date.arriving',
+          'loc-args': [user.username]
+        },
+        badge: 1
+      });
+    }
+
     callback(null, true);
   }
 
