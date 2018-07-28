@@ -33,6 +33,16 @@
       "type": "boolean",
       "required": true,
       "default": false
+    },
+    "senderArriving": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "recipientArriving": {
+      "type": "boolean",
+      "required": true,
+      "default": false
     }
   },
   "scope": {

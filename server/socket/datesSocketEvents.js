@@ -371,7 +371,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
               },
               {
                 status: GoozeUser.constants.status.onDate,
-                mode: mode
+                mode: mode,
+                activeUntil: null
               })
           ])
         );
@@ -424,23 +425,36 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     var funcName = 'updateLocation';
     debug(funcName + ' - event received');
     var error, recipientSockets;
+    var promise = Promise.resolve();
     var recipientId = data[0];
     var user = data[1];
     var isArriving = data[2];
+    var dateRequestId = data[3];
 
     debug(user, isArriving);
 
-    GoozeUser.updateAll(
-      {
-        id: user.id
-      },
-      {
-        currentLocation: user.currentLocation
-      }).then(function() {
-        debug(funcName + 'user location persisted');
-      }).catch(function(reason) {
-        console.error(funcName + ' failed to persist user. ' + reason);
-      });
+    if (isArriving) {
+      debug(funcName + ' - user is arriving to date location');
+
+      promise = sendArrivingNotification(user, recipientId, dateRequestId);
+    }
+
+    promise.then(function() {
+      return (
+        GoozeUser.updateAll(
+          {
+            id: user.id
+          },
+          {
+            currentLocation: user.currentLocation
+          })
+      );
+    })
+    .then(function() {
+      debug(funcName + ' - user location persisted');
+    }).catch(function(reason) {
+      console.error(funcName + ' - failed to persist user. ' + reason);
+    });
 
     debug(funcName + ' - Emitting locationUpdateReceived event to [id=' + recipientId + ']');
     recipientSockets = clients[recipientId];
@@ -455,17 +469,58 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
       debug(funcName + ' - Recipient socket not found on connected clients list. locationUpdateReceived not emitted');
     }
 
-    if (isArriving) {
-      apns.send(app.apnsProvider, recipientId, {
-        alert: {
-          'loc-key': 'vm.map.date.arriving',
-          'loc-args': [user.username]
-        },
-        badge: 1
-      });
-    }
-
     callback(null, true);
+  }
+
+  function sendArrivingNotification(user, recipientId, dateRequestId) {
+    var error, arrivingProp;
+    var funcName = 'sendArrivingNotification';
+
+    return (
+      DateRequest.findById(dateRequestId)
+      .then(function(dateRequest) {
+        var updatePromise = Promise.resolve(dateRequest);
+        var attr = {};
+        if (!dateRequest) {
+          debug(funcName + ' - Date request not found');
+          error = new Error('Date request not found');
+          error.statusCode = error.status = 404;
+          error.code = 'DATE_REQUEST_NOT_FOUND';
+          throw error;
+        }
+
+        var dateRequestJson = dateRequest.toJSON();
+
+        debug(dateRequestJson, dateRequestJson.sender, typeof dateRequestJson.sender.id);
+
+        if (dateRequestJson.sender && dateRequestJson.sender.id.toJSON() === user.id) {
+          arrivingProp = 'senderArriving';
+        } else if (dateRequestJson.recipient && dateRequestJson.recipient.id.toJSON() === user.id) {
+          arrivingProp = 'recipientArriving';
+        } else {
+          console.error(funcName + ' - Couldn\'t determine user mode');
+        }
+
+        debug(funcName + ' - checking whether arriving notification has been sent');
+        if (!dateRequest[arrivingProp]) {
+          debug(funcName + ' - notification has not been sent. sending...');
+          attr[arrivingProp] = true;
+
+          updatePromise = dateRequest.updateAttributes(attr);
+
+          apns.send(app.apnsProvider, recipientId, {
+            alert: {
+              'loc-key': 'vm.map.date.arriving',
+              'loc-args': [user.username]
+            },
+            badge: 1
+          });
+          debug(funcName + ' - push notification sent');
+        }
+
+        return updatePromise;
+      })
+    );
   }
 
   function emitDateStatusChanged(toUserId, dateRequest) {
