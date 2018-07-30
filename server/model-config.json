@@ -69,6 +69,7 @@
           "startDate": true,
           "endDate": true,
           "cancelDate": true,
+          "closeChat": true,
           "prototype.patchAttributes": true
         }
       }

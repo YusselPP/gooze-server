@@ -339,4 +339,97 @@ module.exports = function(DateRequest) {
     ],
     returns: {type: 'DateRequest', root: true}
   });
+
+  DateRequest.closeChat = function(params, cb) {
+    var funcName = 'closeChat - ';
+    debug(funcName, params);
+    var promise, error, notifiedUserId, closeProperty;
+    var newAttributes = {};
+    var mode = params.mode;
+    var dateRequest = params.dateRequest;
+    var dateRequestId = dateRequest && dateRequest.id;
+    var senderId = dateRequest.sender && dateRequest.sender.id;
+    var recipientId = dateRequest.recipient && dateRequest.recipient.id;
+
+    cb = typeof cb === 'function' ? cb : undefined;
+
+    if (mode === 'client') {
+      closeProperty = 'senderClosed';
+      notifiedUserId = recipientId;
+    } else {
+      closeProperty = 'recipientClosed';
+      notifiedUserId = senderId;
+    }
+
+    promise = (
+      DateRequest.findById(dateRequestId)
+        .then(function(dateRequest) {
+          if (!dateRequest) {
+            debug(funcName, 'Model not found');
+            error = new Error('Model not found');
+            error.statusCode = error.status = 404;
+            error.code = 'MODEL_NOT_FOUND';
+            throw error;
+          }
+
+          if (dateRequest.status === DateRequest.constants.status.onDate) {
+            debug(funcName, 'Cannot close the chat, there is an ongoing date');
+            error = new Error('Cannot close the chat, there is an ongoing date');
+            error.statusCode = error.status = 412;
+            error.code = 'ONGOING_DATE';
+            throw error;
+          }
+
+          if (
+            dateRequest.status === DateRequest.constants.status.accepted ||
+            dateRequest.status === DateRequest.constants.status.received ||
+            dateRequest.status === DateRequest.constants.status.sent
+          ) {
+            newAttributes.status = DateRequest.constants.status.rejected;
+          }
+
+          newAttributes[closeProperty] = true;
+
+          return dateRequest.updateAttributes(newAttributes);
+        })
+        .then(function(updatedRequest) {
+          debug(funcName, updatedRequest);
+
+          var datesService = DateRequest.app.datesSocketChannel.customService;
+
+          if (datesService && newAttributes.status) {
+            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest);
+          } else {
+            console.error(funcName + 'datesService not available yet');
+          }
+
+          return updatedRequest;
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function(updatedRequest) {
+        cb(null, updatedRequest);
+      })
+      .catch(function(reason) {
+        cb(reason);
+      });
+  };
+
+  DateRequest.remoteMethod('closeChat', {
+    http: {verb: 'post'},
+    accepts: [
+      {
+        arg: 'params',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      }
+    ],
+    returns: {type: 'DateRequest', root: true}
+  });
 };

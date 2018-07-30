@@ -187,6 +187,13 @@
     },
     {
       "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
+      "property": "closeChat"
+    },
+    {
+      "principalType": "ROLE",
       "principalId": "requestOwners",
       "permission": "ALLOW",
       "accessType": "WRITE",
