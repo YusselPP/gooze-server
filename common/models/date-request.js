@@ -173,8 +173,8 @@ module.exports = function(DateRequest) {
             return (
               Promise.all([
                 DateRequest.updateAll({id: dateRequest.id}, {status: DateRequest.constants.status.ended}),
-                GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available}),
-                GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available}),
+                GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available, activeDateRequestId: null}),
+                GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available, activeDateRequestId: null}),
                 GZEDate.updateAll({id: dateId}, {status: GZEDate.constants.status.ended})
               ])
             );
@@ -185,23 +185,42 @@ module.exports = function(DateRequest) {
           }
         })
         .then(function() {
-          return DateRequest.findById(dateRequest.id);
+          return (
+            Promise.all([
+              DateRequest.findById(dateRequest.id),
+              GoozeUser.findById(senderId),
+              GoozeUser.findById(recipientId)
+            ])
+          );
         })
-        .then(function(updatedRequest) {
+        .then(function([updatedRequest, sender, recipient]) {
           debug(updatedRequest);
-
+          var updatedUser, notifiedUser, result;
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
+          if (ender === 'senderEnded') {
+            updatedUser = sender;
+            notifiedUser = recipient;
+          } else if (ender === 'recipientEnded') {
+            updatedUser = recipient;
+            notifiedUser = sender;
+          }
+
           if (datesService) {
-            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest);
+            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest, notifiedUser);
           } else {
             console.error('DateRequest.endDate - datesService not available yet');
           }
 
+          result = {
+            dateRequest: updatedRequest,
+            user: updatedUser
+          };
+
           if (cb) {
-            cb(null, updatedRequest);
+            cb(null, result);
           } else {
-            return updatedRequest;
+            return result;
           }
         })
         .catch(function(reason) {
@@ -229,7 +248,7 @@ module.exports = function(DateRequest) {
       },
       {arg: 'options', type: 'object', http: 'optionsFromRequest'}
     ],
-    returns: {type: 'DateRequest', root: true}
+    returns: {type: 'object', root: true}
   });
 
   DateRequest.cancelDate = function(dateRequest, options, cb) {
@@ -289,27 +308,44 @@ module.exports = function(DateRequest) {
           return (
             Promise.all([
               DateRequest.updateAll({id: dateRequest.id}, {status: DateRequest.constants.status.ended}),
-              GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available}),
-              GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available}),
+              GoozeUser.updateAll({id: senderId}, {status: GoozeUser.constants.status.available, activeDateRequestId: null}),
+              GoozeUser.updateAll({id: recipientId}, {status: GoozeUser.constants.status.available, activeDateRequestId: null}),
               GZEDate.updateAll({id: dateId}, {status: GZEDate.constants.status.canceled})
             ])
           );
         })
         .then(function() {
-          return DateRequest.findById(dateRequest.id);
+          return (
+            Promise.all([
+              DateRequest.findById(dateRequest.id),
+              GoozeUser.findById(senderId),
+              GoozeUser.findById(recipientId)
+            ])
+          );
         })
-        .then(function(updatedRequest) {
+        .then(function([updatedRequest, sender, recipient]) {
           debug(updatedRequest);
-
+          var updatedUser, notifiedUser;
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
+          if (ender === 'senderCanceled') {
+            updatedUser = sender;
+            notifiedUser = recipient;
+          } else if (ender === 'recipientCanceled') {
+            updatedUser = recipient;
+            notifiedUser = sender;
+          }
+
           if (datesService) {
-            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest);
+            datesService.emitDateStatusChanged(notifiedUserId, updatedRequest, notifiedUser);
           } else {
             console.error('DateRequest.cancelDate - datesService not available yet');
           }
 
-          return updatedRequest;
+          return {
+            dateRequest: updatedRequest,
+            user: updatedUser
+          };
         })
     );
 
@@ -337,7 +373,7 @@ module.exports = function(DateRequest) {
       },
       {arg: 'options', type: 'object', http: 'optionsFromRequest'}
     ],
-    returns: {type: 'DateRequest', root: true}
+    returns: {type: 'object', root: true}
   });
 
   DateRequest.closeChat = function(params, cb) {

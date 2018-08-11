@@ -105,7 +105,7 @@
   },
   "validations": [],
   "scope": {
-    "include": [ "comments", "payment"]
+    "include": [ "comments", "payment", "activeDateRequest"]
   },
   "relations": {
     "accessTokens": {
@@ -143,6 +143,11 @@
       "type": "hasOne",
       "model": "Payment",
       "foreignKey": "userId"
+    },
+    "activeDateRequest": {
+      "type": "belongsTo",
+      "model": "DateRequest",
+      "foreignKey": "activeDateRequestId"
     }
   },
   "acls": [

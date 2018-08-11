@@ -356,29 +356,32 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                   status: DateRequest.constants.status.onDate
                 });
               }),
-            GoozeUser.updateAll(
-              {
-                id: socket.userId
-              },
+
+
+            GoozeUser.updateById(socket.userId,
               {
                 status: GoozeUser.constants.status.onDate,
                 mode: mode === 'client' ? 'gooze' : 'client',
-                activeUntil: null
+                activeUntil: null,
+                activeDateRequestId: dateRequest.id
+              })
+              .then(function(user) {
+                return user.reload();
               }),
-            GoozeUser.updateAll(
-              {
-                id: dateRequestJson.recipient && dateRequestJson.recipient.id
-              },
+            GoozeUser.updateById(dateRequestJson.recipient && dateRequestJson.recipient.id,
               {
                 status: GoozeUser.constants.status.onDate,
                 mode: mode,
-                activeUntil: null
+                activeUntil: null,
+                activeDateRequestId: dateRequest.id
+              })
+              .then(function(user) {
+                return user.reload();
               })
           ])
         );
       })
-      .then(function(result) {
-        var dateRequest = result[0];
+      .then(function([dateRequest, sender, recipient]) {
         var recipientSockets, recipientId;
         var dateRequestJson = dateRequest.toJSON();
 
@@ -391,7 +394,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         recipientSockets = clients[recipientId];
         if (Array.isArray(recipientSockets)) {
           recipientSockets.forEach(function(recipientSocket) {
-            recipientSocket.emit(events.createChargeSuccess, dateRequestJson, function ack() {
+            recipientSocket.emit(events.createChargeSuccess, dateRequestJson, recipient, function ack() {
               // recipient has received requestAccepted event
               debug(funcName + ' - createChargeSuccess event has been received');
             });
@@ -409,7 +412,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           debug(funcName + ' - createChargeSuccess message sent successfully');
         });
 
-        callback(null, dateRequestJson);
+        callback(null, dateRequestJson, sender);
       })
       .catch(function(err) {
         console.error(err);
@@ -523,7 +526,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     );
   }
 
-  function emitDateStatusChanged(toUserId, dateRequest) {
+  function emitDateStatusChanged(toUserId, dateRequest, user) {
     var recipientSockets;
 
     if (!toUserId) {
@@ -535,7 +538,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
     if (Array.isArray(recipientSockets)) {
       recipientSockets.forEach(function(recipientSocket) {
-        recipientSocket.emit(events.dateStatusChanged, dateRequest, function ack() {
+        recipientSocket.emit(events.dateStatusChanged, dateRequest, user, function ack() {
           debug('emitDateStatusChanged - .dateStatusChanged has been received');
         });
         debug('emitDateStatusChanged - Successfully emitted: .dateStatusChanged event');
