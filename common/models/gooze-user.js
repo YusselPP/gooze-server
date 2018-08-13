@@ -62,6 +62,58 @@ module.exports = function(GoozeUser) {
     GoozeUser.defineProperty(key, {type: Rating});
   });
 
+  function overallRating(user) {
+    var rates = [
+      user.imagesRating && user.imagesRating.value / user.imagesRating.count,
+      user.complianceRating && user.complianceRating.value / user.complianceRating.count,
+      user.dateQualityRating && user.dateQualityRating.value / user.dateQualityRating.count,
+      user.dateRating && user.dateRating.value / user.dateRating.count,
+      user.goozeRating && user.goozeRating.value / user.goozeRating.count
+    ].filter(function(rate) { return typeof rate === 'number' && rate === rate; });
+
+    if (rates.length <= 0) {
+      return 0;
+    }
+
+    debug('user:', user);
+    debug('rates:', rates);
+
+    return rates.reduce(function(prev, rate) { return prev + rate; }, 0) / rates.length;
+  }
+
+  GoozeUser.updateById = function(id, data, cb) {
+    var error, promise;
+
+    cb = typeof cb === 'function' ? cb : undefined;
+
+    promise = (
+      GoozeUser.findById(id)
+        .then(function(user) {
+          if (!user) {
+            debug('updateById - User not found');
+            error = new Error('User with id[=' + id + '] not found');
+            error.statusCode = error.status = 404;
+            error.code = 'MODEL_NOT_FOUND';
+            throw error;
+          }
+
+          return user.updateAttributes(data);
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function(user) {
+        cb(null, user);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
+  };
+
   // TODO: add optional filter to show bad rate users
   GoozeUser.findByLocation = function(location, maxDistance, limit, options, cb) {
     var DateRequest = GoozeUser.app.models.DateRequest;
@@ -69,22 +121,133 @@ module.exports = function(GoozeUser) {
 
     debug(options);
     cb = typeof cb === 'function' ? cb : undefined;
+    maxDistance = (maxDistance || 0) * 1000;
+
     var where = {
-      currentLocation: {
-        near: location,
-        maxDistance: maxDistance || 0,
-        unit: 'kilometers'
-      },
       activeUntil: {
-        gte: new Date()
+        $gte: new Date()
       }
     };
     var userId = options && options.accessToken && options.accessToken.userId;
     if (userId) {
-      where.id = {
-        neq: userId
+      where._id = {
+        $ne: userId
       };
     }
+
+    var usersByLocation = function(where) {
+      return new Promise(function(resolve, reject) {
+        GoozeUser.getDataSource().connector.connect(function(err, db) {
+          var aggregatePipe;
+
+          if (err)
+            return reject(err);
+
+          aggregatePipe = [
+            {
+              $geoNear: {
+                near: {type: 'Point', coordinates: [location.lng, location.lat]},
+                distanceField: 'calcDistance',
+                key: 'currentLoc',
+                spherical: true,
+                maxDistance: maxDistance
+              }
+            },
+            {
+              $match: where
+            },
+            {
+              $lookup: {
+                from: 'DateRequest',
+                let: {userId: '$_id'},
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        // income as gooze
+                        $eq: ['$recipientId', '$$userId']
+                        // spent as client
+                        // $eq: ['$recipientId', '$$userId']
+                      }
+                    }
+                  },
+                  {
+                    $lookup: {
+                      from: 'GZEDate',
+                      localField: 'dateId',
+                      foreignField: '_id',
+                      as: 'date'
+                    }
+                  },
+                  {
+                    $unwind: {
+                      path: '$date',
+                      preserveNullAndEmptyArrays: true
+                    }
+                  },
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: ['$date.status', 'ended']
+                      }
+                    }
+                  }
+                ],
+                as: 'goozeRequest'
+              }
+            },
+            {
+              $project: {
+                'id': 1,
+                'username': 1,
+                'email': 1,
+                'searchPic': 1,
+                'profilePic': 1,
+                'currentLocation': 1,
+                'imagesRating': 1,
+                'complianceRating': 1,
+                'dateQualityRating': 1,
+                'dateRating': 1,
+                'goozeRating': 1,
+                overallRating: {
+                  $sum: [
+                    {$divide: ['$complianceRating.value', '$complianceRating.count']},
+                    {$divide: ['$dateQualityRating.value', '$dateQualityRating.count']},
+                    {$divide: ['$dateRating.value', '$dateRating.count']},
+                    {$divide: ['$goozeRating.value', '$goozeRating.count']},
+                    {$divide: ['$imagesRating.value', '$imagesRating.count']}
+                  ]
+                },
+                income: {
+                  $reduce: {
+                    input: '$goozeRequest',
+                    initialValue: 0,
+                    in: {$sum: ['$$value', '$$this.amount']}
+                  }
+                }
+              }
+            },
+            {
+              $sort: {overallRating: -1, income: -1}
+            },
+            {
+              $skip: 0
+            },
+            {
+              $limit: limit || 5
+            }];
+
+          db.collection('GoozeUser').aggregate(aggregatePipe, function(err, data) {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            resolve(data);
+          });
+        });
+      });
+    };
 
     var promise = (
       GoozeUser.findById(userId)
@@ -93,29 +256,13 @@ module.exports = function(GoozeUser) {
 
           if (searchForGender && searchForGender.length > 0) {
             where.gender = {
-              inq: searchForGender
+              $in: searchForGender
             };
           }
 
           return (
             Promise.all([
-              GoozeUser.find({
-                where: where,
-                fields: [
-                  'id',
-                  'username',
-                  'email',
-                  'searchPic',
-                  'profilePic',
-                  'currentLocation',
-                  'imagesRating',
-                  'complianceRating',
-                  'dateQualityRating',
-                  'dateRating',
-                  'goozeRating'
-                ],
-                limit: limit || 5
-              }),
+              usersByLocation(where),
               DateRequest.find({
                 where: {
                   senderId: userId,
@@ -145,64 +292,62 @@ module.exports = function(GoozeUser) {
           if (dateRequests && dateRequests.length > 0) {
             debug('findByLocation - found ' + dateRequests.length + ' unresponded requests.');
 
-            var convertibleUsers = users.map(function(user) {
-              var userDateReq;
-              var userId = user.id instanceof ObjectID ? user.id.toJSON() : user.id;
+            var convertibleUsers = (
+              users
+                .map(function(user) {
+                  var userDateReq;
+                  var userId = user.id instanceof ObjectID ? user.id.toJSON() : user.id;
 
-              debug('userId: ' + userId);
+                  debug('userId: ' + userId);
 
-              dateRequests
-                .some(function(dateReq, index, array) {
-                  var recipientId = dateReq.recipientId;
+                  dateRequests
+                    .some(function(dateReq, index, array) {
+                      var recipientId = dateReq.recipientId;
 
-                  recipientId = (
-                    (recipientId instanceof DateRequest.dataSource.ObjectID) ?
-                      recipientId.toJSON() :
-                      recipientId
-                  );
+                      recipientId = (
+                        (recipientId instanceof DateRequest.dataSource.ObjectID) ?
+                          recipientId.toJSON() :
+                          recipientId
+                      );
 
-                  var exists = recipientId === userId;
+                      var exists = recipientId === userId;
 
-                  if (exists) {
-                    debug('user: ' + user.id + ' converted to request: ' + dateReq.id);
-                    userDateReq = dateReq;
-                    array.splice(index, 1);
+                      if (exists) {
+                        debug('user: ' + user.id + ' converted to request: ' + dateReq.id);
+                        userDateReq = dateReq;
+                        array.splice(index, 1);
+                      }
+
+                      return exists;
+                    });
+
+                  if (userDateReq) {
+                    return userDateReq;
+                  } else {
+                    return user;
                   }
+                })
+            );
 
-                  return exists;
-                });
-
-              if (userDateReq) {
-                return userDateReq;
-              } else {
-                return user;
-              }
-            });
-
-            if (cb) {
-              cb(null, convertibleUsers);
-            }
             return convertibleUsers;
           } else {
             debug('findByLocation - no unresponded requests found.');
-            if (cb) {
-              cb(null, users);
-            }
             return users;
           }
         })
-          .catch(function(err) {
-            if (cb) {
-              cb(err);
-            } else {
-              throw err;
-            }
-          })
       );
 
     if (!cb) {
       return promise;
     }
+
+    promise
+      .then(function(convertibleUsers) {
+        cb(null, convertibleUsers);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
   };
 
   GoozeUser.remoteMethod('findByLocation', {
