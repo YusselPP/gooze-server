@@ -169,6 +169,13 @@
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "accessType": "EXECUTE",
+      "property": "findUnresponded"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "accessType": "EXECUTE",
       "property": "startDate"
     },
     {

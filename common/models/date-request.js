@@ -21,6 +21,230 @@ module.exports = function(DateRequest) {
   DateRequest.validatesInclusionOf('status', {in: Object.keys(DateRequest.constants.status)});
   DateRequest.validatesPresenceOf('senderId', 'recipientId');
 
+  DateRequest.findUnresponded = function(userId, options, cb) {
+    var promise = new Promise(function(resolve, reject) {
+      DateRequest.getDataSource().connector.connect(function(err, db) {
+        var aggregatePipe;
+
+        if (err)
+          return reject(err);
+
+        aggregatePipe = [
+          {
+            $match: {
+              recipientId: DateRequest.dataSource.ObjectID(userId),
+              recipientClosed: false,
+              $or: [
+                {status: 'sent'},
+                {status: 'received'},
+                {status: 'accepted'},
+                {status: 'onDate'}
+              ]
+            }
+          },
+          {
+            $lookup: {
+              from: 'GoozeUser',
+              as: 'sender',
+              let: {senderId: '$senderId'},
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$_id', '$$senderId']
+                    }
+                  }
+                },
+                {
+                  $project: {
+                    'id': '$_id',
+                    'username': 1,
+                    'email': 1,
+                    'searchPic': 1,
+                    'profilePic': 1,
+                    'imagesRating': 1,
+                    'complianceRating': 1,
+                    'dateQualityRating': 1,
+                    'dateRating': 1,
+                    'goozeRating': 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            $unwind: {
+              path: '$sender',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'GoozeUser',
+              as: 'recipient',
+              let: {recipientId: '$recipientId'},
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$_id', '$$recipientId']
+                    }
+                  }
+                },
+                {
+                  $project: {
+                    'id': '$_id',
+                    'username': 1,
+                    'email': 1,
+                    'searchPic': 1,
+                    'profilePic': 1,
+                    'imagesRating': 1,
+                    'complianceRating': 1,
+                    'dateQualityRating': 1,
+                    'dateRating': 1,
+                    'goozeRating': 1
+                  }
+                }
+              ]
+            }
+          },
+          {
+            $unwind: {
+              path: '$recipient',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'Chat',
+              localField: 'chatId',
+              foreignField: '_id',
+              as: 'chat'
+            }
+          },
+          {
+            $unwind: {
+              path: '$chat',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'GZEDate',
+              localField: 'dateId',
+              foreignField: '_id',
+              as: 'date'
+            }
+          },
+          {
+            $unwind: {
+              path: '$date',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
+            $lookup: {
+              from: 'DateRequest',
+              let: {senderId: '$senderId'},
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$senderId', '$$senderId']
+                    }
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'GZEDate',
+                    localField: 'dateId',
+                    foreignField: '_id',
+                    as: 'date'
+                  }
+                },
+                {
+                  $unwind: {
+                    path: '$date',
+                    preserveNullAndEmptyArrays: true
+                  }
+                },
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$date.status', 'ended']
+                    }
+                  }
+                }
+              ],
+              as: 'senderRequests'
+            }
+          },
+          {
+            $addFields: {
+              id: '$_id',
+              'senderOverallRating': {
+                $sum: [
+                  {$divide: ['$sender.complianceRating.value', '$sender.complianceRating.count']},
+                  {$divide: ['$sender.dateQualityRating.value', '$sender.dateQualityRating.count']},
+                  {$divide: ['$sender.dateRating.value', '$sender.dateRating.count']},
+                  {$divide: ['$sender.goozeRating.value', '$sender.goozeRating.count']},
+                  {$divide: ['$sender.imagesRating.value', '$sender.imagesRating.count']}
+                ]
+              },
+              'senderSpent': {
+                $reduce: {
+                  input: '$senderRequests',
+                  initialValue: 0,
+                  in: {$sum: ['$$value', '$$this.amount']}
+                }
+              },
+              senderRequests: null
+            }
+          },
+          {
+            $sort: {'senderOverallRating': -1, 'senderSpent': -1}
+          },
+          {
+            $skip: 0
+          },
+          {
+            $limit: 100
+          }
+        ];
+
+        db.collection('DateRequest').aggregate(aggregatePipe, function(err, data) {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          resolve(data);
+        });
+      });
+    });
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function(dateRequests) {
+        cb(null, dateRequests);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
+  };
+
+  DateRequest.remoteMethod('findUnresponded', {
+    http: {verb: 'get'},
+    accepts: [
+      {arg: 'userId', type: 'string', http: {source: 'query'}},
+      {arg: 'options', type: 'object', http: 'optionsFromRequest'}
+    ],
+    returns: {type: [], root: true}
+  });
+
   DateRequest.startDate = function(dateRequest, options, cb) {
     debug(dateRequest);
     var promise, notifiedUserId, starter;

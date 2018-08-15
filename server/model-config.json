@@ -66,6 +66,7 @@
         "sharedMethods": {
           "*": false,
           "find": true,
+          "findUnresponded": true,
           "startDate": true,
           "endDate": true,
           "cancelDate": true,

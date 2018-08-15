@@ -198,7 +198,6 @@ module.exports = function(GoozeUser) {
             },
             {
               $project: {
-                'id': 1,
                 'username': 1,
                 'email': 1,
                 'searchPic': 1,
@@ -209,6 +208,7 @@ module.exports = function(GoozeUser) {
                 'dateQualityRating': 1,
                 'dateRating': 1,
                 'goozeRating': 1,
+                id: '$_id',
                 overallRating: {
                   $sum: [
                     {$divide: ['$complianceRating.value', '$complianceRating.count']},
