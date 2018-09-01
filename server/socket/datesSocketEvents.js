@@ -1,5 +1,3 @@
-'use strict';
-
 var debug = require('debug')('gooze:dates-socket-events');
 var apns = require('../../common/services/apns/apns-service');
 
@@ -23,7 +21,9 @@ var events = {
 
   dateStarted: 'dateStarted',
   dateEnded: 'dateEnded',
-  dateStatusChanged: 'dateStatusChanged'
+  dateStatusChanged: 'dateStatusChanged',
+
+  userChanged: 'userChanged'
 };
 
 module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
@@ -34,7 +34,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
   channel.customService = {
     updateLocation: updateLocation,
-    emitDateStatusChanged: emitDateStatusChanged
+    emitDateStatusChanged: emitDateStatusChanged,
+    emitUserChanged: emitUserChanged
   };
 
   socket.on(events.findRequestById, function(data, callback) {
@@ -357,7 +358,6 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 });
               }),
 
-
             GoozeUser.updateById(socket.userId,
               {
                 status: GoozeUser.constants.status.onDate,
@@ -546,5 +546,41 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     } else {
       debug('emitDateStatusChanged - Recipient socket not found on connected clients list. dateStatusChanged event not emitted');
     }
+  }
+
+  function emitUserChanged(userIds, user) {
+    const funcName = emitUserChanged.name + ' -';
+    let recipientSockets;
+
+    if (Array.isArray(userIds)) {
+      console.error(
+        funcName, 'userIds must be an array, found[type=' + (typeof userIds) + ']. .userChanged event wont be emitted'
+      );
+      return;
+    }
+
+    recipientSockets = (
+      userIds.reduce((result, userId) => {
+        let userSockets = clients[userId];
+
+        if (!Array.isArray(userSockets)) {
+          return result;
+        }
+
+        return [...result, ...userSockets];
+      }, [])
+    );
+
+    if (recipientSockets.length === 0) {
+      debug(funcName, 'No recipient socket found on connected clients list, .userChanged event wont be emitted');
+      return;
+    }
+
+    recipientSockets.forEach((recipientSocket) => {
+      recipientSocket.emit(events.userChanged, user, function ack() {
+        debug(funcName, '.userChanged has been received');
+      });
+      debug(funcName, '.userChanged event emitted');
+    });
   }
 };

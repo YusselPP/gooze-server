@@ -2,6 +2,13 @@
   "extends": "loopback",
   "rules": {
     "comma-dangle": ["error", "only-multiline"],
-    "max-len": ["error", { "code": 120 }]
+    "max-len": ["error", { "code": 200 }]
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "env": {
+    "node": true
   }
 }

@@ -1,5 +1,3 @@
-'use strict';
-
 var debug = require('debug')('gooze:gooze-user');
 var https = require('https');
 
