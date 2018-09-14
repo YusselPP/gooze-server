@@ -449,7 +449,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
             id: user.id
           },
           {
-            currentLocation: user.currentLocation
+            currentLocation: user.currentLocation,
+            currentLoc: [user.currentLocation.lng, user.currentLocation.lat]
           })
       );
     })

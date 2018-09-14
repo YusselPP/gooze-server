@@ -93,6 +93,9 @@
     "currentLocation": {
       "type": "GeoPoint"
     },
+    "currentLoc": {
+      "type": "array"
+    },
     "dateLocation": {
       "type": "GeoPoint"
     },
