@@ -70,6 +70,7 @@
           "startDate": true,
           "endDate": true,
           "cancelDate": true,
+          "createCharge": true,
           "closeChat": true,
           "prototype.patchAttributes": true
         }

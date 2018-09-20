@@ -216,6 +216,8 @@ module.exports = function(Payment) {
           .then(function(response) {
             var promise = Promise.resolve(response);
 
+            debug('createCharge - response: ', response);
+
             if (response.success) {
               var transaction = response.transaction;
 
@@ -234,6 +236,8 @@ module.exports = function(Payment) {
                     return response;
                   })
               );
+            } else { // TODO: What happens with the response.errors, TEST
+              throw new Error(response.message);
             }
 
             return promise;

@@ -600,6 +600,99 @@ module.exports = function(DateRequest) {
     returns: {type: 'object', root: true}
   });
 
+  DateRequest.createCharge = function createCharge(data, cb) {
+    var error;
+    var funcName = 'createCharge';
+    var GoozeUser = DateRequest.app.models.GoozeUser;
+    var Payment = DateRequest.app.models.Payment;
+    var datesService = DateRequest.app.datesSocketChannel.customService;
+
+    var sale = {
+      amount: data.amount,
+      paymentMethodToken: data.paymentMethodToken,
+      deviceData: data.deviceData, // PayPalService.deviceData,
+      description: data.description, // "Recipient: \(dateRequest.recipient.username), DateRequest: \(dateRequest.id)",
+      dateRequestId: data.dateRequestId, // data.dateRequest.id,
+      fromUserId: data.fromUserId, // data.dateRequest.sender.id,
+      toUserId: data.toUserId // data.dateRequest.recipient.id
+    };
+
+    debug(funcName, '-', data);
+
+    // TODO: Validations before creating the charge?
+    // Check that the user doesn't have an ongoing date already
+    Promise.all([
+      GoozeUser.findById(data.fromUserId),
+      GoozeUser.findById(data.toUserId)
+    ]).then(function([sender, recipient]) {
+      debug(funcName, '-', 'Checking user status');
+
+      if (sender && sender.status === GoozeUser.constants.status.onDate) {
+        error = new Error('The sender is already on a date');
+        error.statusCode = error.status = 409;
+        error.code = 'INVALID_SENDER_STATUS';
+        throw error;
+      }
+
+      if (recipient && recipient.status === GoozeUser.constants.status.onDate) {
+        error = new Error('The recipient is already on a date');
+        error.statusCode = error.status = 409;
+        error.code = 'INVALID_RECIPIENT_STATUS';
+        throw error;
+      }
+
+      sale.description = `Recipient: ${recipient.username}(${recipient.email}), Sender: ${sender.username}(${sender.email}), DateRequest: ${data.dateRequestId}`;
+    })
+      .then(() => Payment.createCharge(sale))
+      .then(function() {
+        let dateData = [
+          data.dateRequestId,
+          data.message,
+          data.username,
+          data.chat,
+          data.mode
+        ];
+        let createDatePromise = new Promise(function(resolve, reject) {
+          datesService.createCharge(dateData, function(err, dateRequest, sender) {
+            if (err) {
+              reject(err);
+              return;
+            }
+
+            // TODO: change all accepted dateRequests to rejected in order to close all other open chats,
+            //       send date request update notifications and sendMessage('the user is not available anymore')
+
+            // TODO: check if client is updated to receive this response object
+            resolve({
+              dateRequest,
+              sender
+            });
+          });
+        });
+
+        return createDatePromise;
+      })
+      .then(function(response) {
+        cb(null, response);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
+  };
+
+  DateRequest.remoteMethod('createCharge', {
+    http: {verb: 'post'},
+    accepts: [
+      {
+        arg: 'data',
+        type: 'object',
+        required: true,
+        http: {source: 'body'}
+      }
+    ],
+    returns: {type: 'object', root: true}
+  });
+
   DateRequest.closeChat = function(params, cb) {
     var funcName = 'closeChat - ';
     debug(funcName, params);

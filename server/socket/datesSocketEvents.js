@@ -34,6 +34,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
   channel.customService = {
     updateLocation: updateLocation,
+    createCharge: createCharge,
     emitDateStatusChanged: emitDateStatusChanged,
     emitUserChanged: emitUserChanged
   };
@@ -317,17 +318,21 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
     debug('acceptRequest - Accepting request: ' + dateRequestId);
   });
 
-  socket.on(events.createCharge, function(data, callback) {
-    var funcName = 'createCharge';
-    debug(funcName + ' - event received');
-    var chatService = app.chatSocketChannel.customService;
-    var error, date;
-    var dateRequestId = data[0];
+  socket.on(events.createCharge, createCharge);
 
+  socket.on(events.updateLocation, updateLocation);
+
+  function createCharge(data, callback) {
+    var error, date;
+    var funcName = 'createCharge';
+    var dateRequestId = data[0];
     var message = data[1];
     var username = data[2];
     var chatJson = data[3];
     var mode = data[4];
+    var chatService = app.chatSocketChannel.customService;
+
+    debug(funcName + ' - data:', data);
 
     DateRequest.findById(dateRequestId)
       .then(function(dateRequest) {
@@ -343,6 +348,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         }
 
         var dateRequestJson = dateRequest.toJSON();
+        var senderId = dateRequestJson.sender && dateRequestJson.sender.id;
+        var recipientId = dateRequestJson.recipient && dateRequestJson.recipient.id;
 
         debug(funcName + ' - creating date');
         return (
@@ -358,7 +365,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
                 });
               }),
 
-            GoozeUser.updateById(socket.userId,
+            GoozeUser.updateById(senderId,
               {
                 status: GoozeUser.constants.status.onDate,
                 mode: mode === 'client' ? 'gooze' : 'client',
@@ -368,7 +375,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
               .then(function(user) {
                 return user.reload();
               }),
-            GoozeUser.updateById(dateRequestJson.recipient && dateRequestJson.recipient.id,
+            GoozeUser.updateById(recipientId,
               {
                 status: GoozeUser.constants.status.onDate,
                 mode: mode,
@@ -420,9 +427,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
       });
 
     debug(funcName + ' - Creating charge');
-  });
-
-  socket.on(events.updateLocation, updateLocation);
+  }
 
   function updateLocation(data, callback) {
     var funcName = 'updateLocation';
