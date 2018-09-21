@@ -658,11 +658,6 @@ module.exports = function(DateRequest) {
               reject(err);
               return;
             }
-
-            // TODO: change all accepted dateRequests to rejected in order to close all other open chats,
-            //       send date request update notifications and sendMessage('the user is not available anymore')
-
-            // TODO: check if client is updated to receive this response object
             resolve({
               dateRequest,
               sender
@@ -671,6 +666,59 @@ module.exports = function(DateRequest) {
         });
 
         return createDatePromise;
+      })
+      .then(function(response) {
+        // TODO: send sendMessage('the user is not available anymore')
+        return (
+          DateRequest.find({
+            where: {
+              recipientId: data.toUserId,
+              status: DateRequest.constants.status.accepted
+            }
+          })
+            .then(function(dateRequests) {
+              return dateRequests.map((dateRequest) => dateRequest.id);
+            })
+            .then(function(dateRequestIds) {
+              debug(funcName, '- dateRequestIds:', dateRequestIds);
+
+              return (
+                DateRequest.updateAll(
+                  {
+                    id: {
+                      inq: dateRequestIds
+                    }
+                  },
+                  {
+                    status: DateRequest.constants.status.rejected
+                  }
+                )
+                  .then(function() {
+                    return DateRequest.find({
+                      where: {
+                        id: {
+                          inq: dateRequestIds
+                        }
+                      }
+                    });
+                  })
+              );
+            })
+            .then(function(updatedRequests) {
+              debug(funcName, '- updatedRequests:', updatedRequests);
+
+              var datesService = DateRequest.app.datesSocketChannel.customService;
+
+              if (datesService) {
+                updatedRequests.forEach(function(updatedRequest) {
+                  datesService.emitDateStatusChanged(updatedRequest.sender.id, updatedRequest);
+                });
+              } else {
+                console.error(funcName + 'datesService not available yet');
+              }
+            })
+            .then(() => response)
+        );
       })
       .then(function(response) {
         cb(null, response);

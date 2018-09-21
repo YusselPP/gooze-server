@@ -136,7 +136,8 @@
       "remoting": {
         "sharedMethods": {
           "*": false,
-          "find": true
+          "find": true,
+          "paymentReport": true
         }
       }
     }

@@ -535,6 +535,8 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
   function emitDateStatusChanged(toUserId, dateRequest, user) {
     var recipientSockets;
 
+    debug('emitDateStatusChanged - toUserId:', toUserId, ', dateRequest.id', dateRequest.id);
+
     if (!toUserId) {
       console.error('emitDateStatusChanged - undefined toUserId, .dateStatusChanged event wont be emitted');
       return;
