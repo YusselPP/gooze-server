@@ -1,0 +1,51 @@
+@import './base.styles';
+
+#lv-modal {
+
+  $modal-dialog-margin-y: 0.5rem * 2;
+  $modal-dialog-margin-y-sm-up: 1.75rem * 2;
+  $modal-title-height: 44px;
+  $modal-footer-height: 70px;
+
+  .modal-header {
+
+    background-color: $cloud-burst;
+    color: $white;
+    padding: 7px;
+
+    .modal-title {
+      font-size: 14px;
+      max-height: 30px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .close {
+      color: $white;
+    }
+  }
+
+  .modal-body {
+    font-size: medium;
+    max-height: calc(100vh -  #{$modal-title-height} -  #{$modal-footer-height} - #{$modal-dialog-margin-y});
+    overflow-y: scroll;
+
+    @media screen and (min-width: 576px) {
+      max-height: calc(100vh -  #{$modal-title-height} -  #{$modal-footer-height} - #{$modal-dialog-margin-y-sm-up});
+    }
+  }
+
+  .modal-footer {
+
+    background-color: $athens-gray;
+    border-top-color: $very-light-gray;
+    max-height: 70px;
+
+    .btn-default {
+      background-color: $santas-gray;
+      border-color: $santas-gray;
+      color: $white;
+    }
+  }
+}

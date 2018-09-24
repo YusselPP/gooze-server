@@ -1,0 +1,13 @@
+@import '../utils/variables.styles';
+
+.toast-component{
+  .toast-element{
+    position:fixed;
+    right: 10px;
+    .close{
+      cursor: pointer;
+      margin-left: 15px;
+    }
+  }
+
+}

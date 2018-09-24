@@ -1,0 +1,30 @@
+@import 'base.styles';
+
+$select-border-color: #b4b4b4;
+$selected-option-color: #accef7;
+
+.lv-select {
+
+  border: solid 1px $select-border-color;
+  overflow-y: scroll;
+  text-decoration: none;
+
+  .options {
+
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    .lv-select-option {
+
+      cursor: pointer;
+      padding: 0.3em;
+
+      &.selected {
+        background-color: $selected-option-color;
+      }
+    }
+
+  }
+
+}

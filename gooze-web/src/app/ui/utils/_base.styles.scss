@@ -1,0 +1,8 @@
+@import 'compass';
+@import 'variables.styles';
+
+// Add wide styles configuration here
+@mixin font-smoothing {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}

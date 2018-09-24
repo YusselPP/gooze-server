@@ -1,0 +1,466 @@
+@import "../utils/base.styles";
+
+.lv-form-control {
+	position: relative;
+
+	input {
+		background: transparent;
+		border: 0;
+		border-bottom: 1px solid $default-input-border;
+		color: $default-input-color;
+		font-size: 16px;
+		outline: 0;
+		padding: {
+			bottom: 0;
+			top: 20px;
+		}
+		position: relative;
+		z-index: 1;
+
+		&:focus {
+			border-color: $default-input-border-hover;
+		}
+
+		&:focus,
+		&:valid {
+			~ label {
+				color: $default-input-color-hover;
+				font-size: 13px;
+				letter-spacing: normal;
+				line-height: normal;
+				top: 2px;
+				z-index: 2;
+			}
+		}
+
+		&:invalid {
+			box-shadow: none;
+		}
+	}
+
+	label {
+		color: $default-input-color-disabled;
+		font: {
+			size: 16px;
+			stretch: normal;
+			style: normal;
+			weight: normal;
+		}
+		left: 0;
+		letter-spacing: 0.1px;
+		max-width: 100%;
+		overflow: hidden;
+		position: absolute;
+		text-overflow: ellipsis;
+		top: 20px;
+		white-space: nowrap;
+	}
+
+	// Help text
+	.lv-help-text {
+		color: $default-input-placeholder;
+		font-size: 12px;
+		text-align: left;
+	}
+
+	&.lv-input-error {
+		input {
+			border-color: $error-input-border;
+		}
+		.lv-help-text {
+			color: $error-input-color;
+		}
+	}
+
+	&.lv-input-warning {
+		input {
+			border-color: $warning-input-border;
+		}
+		.lv-help-text {
+			color: $warning-input-color;
+		}
+	}
+}
+
+// Toggle input, Radio input, Checkbox input
+.lv-form-control.lv-input-selection {
+	> label {
+		margin-bottom: 0;
+		overflow: hidden;
+		position: relative;
+		top: auto;
+	}
+	input {
+		left: -9999px;
+		position: absolute;
+	}
+	.lv-input-selection-label {
+		cursor: pointer;
+	}
+
+	// Error
+	&.lv-input-error {
+		.lv-input-toggle {
+			.lv-input-selection-label:before {
+				border-color: $error-input-border;
+			}
+			.lv-form-input:checked ~ .lv-input-selection-label:before {
+				background: $error-input-border!important;
+			}
+		}
+	}
+	// Warning
+	&.lv-input-warning {
+		.lv-input-toggle {
+			.lv-input-selection-label:before {
+				border-color: $warning-input-border;
+			}
+			.lv-form-input:checked ~ .lv-input-selection-label:before {
+				background: $warning-input-border!important;
+			}
+		}
+	}
+
+	// Toggle
+	.lv-input-toggle {
+		position: relative;
+
+		.lv-input-selection-label {
+			display: inline-block;
+			padding-left: 37px;
+			white-space: normal;
+
+			&:after,
+			&:before {
+				border-radius: 16px;
+				content: '';
+				display: inline-block;
+				position: absolute;
+				top: 50%;
+			}
+
+			&:after {
+				background: $white;
+				height: 14px;
+				left: 1px;
+				margin-top: -7px;
+				width: 14px;
+				will-change: left;
+				@include transition(left 150ms cubic-bezier(0.175, 0.885, 0.320, 1.275));
+			}
+
+			&:before {
+				background: $comet;
+				border: 1px solid $comet;
+				height: 16px;
+				left: 0;
+				margin-top: -8px;
+				width: 32px;
+				will-change: background;
+				@include transition(background 150ms ease);
+			}
+		}
+		// Checked
+		.lv-form-input:checked ~ .lv-input-selection-label {
+			&:after {
+				left: 17px;
+			}
+			&:before {
+				background: $summer-sky;
+				border-color: $summer-sky;
+			}
+		}
+		// Focus
+		.lv-form-input:focus ~ .lv-input-selection-label {
+			&:before {
+				background: darken($comet, 10%);
+			}
+		}
+		// Focus and checked
+		.lv-form-input:focus:checked ~ .lv-input-selection-label {
+			&:before {
+				background: darken($summer-sky, 10%);
+			}
+		}
+		// Disabled
+		.lv-form-input:disabled ~ .lv-input-selection-label {
+			cursor: not-allowed;
+
+			&:before {
+				border-color: lighten($comet, 15%);
+				background: lighten($comet, 15%);
+			}
+		}
+		// Checked and disabled
+		.lv-form-input:disabled:checked ~ .lv-input-selection-label {
+			&:before {
+				background: lighten($summer-sky, 10%);
+			}
+		}
+	}
+	// Toggle with label aligned to left
+	&.left-label {
+		.lv-input-toggle {
+			.lv-input-selection-label {
+				padding: {
+					left: 0;
+					right: 37px;
+				}
+
+				&:after {
+					left: auto;
+					right: 17px;
+					will-change: right;
+					@include transition(right 150ms cubic-bezier(0.175, 0.885, 0.320, 1.275));
+				}
+				&:before {
+					left: auto;
+					right: 0;
+				}
+			}
+			.lv-form-input:checked ~ .lv-input-selection-label{
+				&:after {
+					left: auto;
+					right: 1px;
+				}
+			}
+		}
+	}
+
+	// Radio
+	.lv-input-radio {
+		.lv-input-selection-label {
+			display: inline-block;
+			padding-left: 21px;
+			white-space: normal;
+
+			&:before {
+				color: $comet;
+				content: '\f111';
+				font: {
+					family: 'Font Awesome 5 Free';
+					weight: 400;
+				}
+				left: 0;
+				margin-top: -12px;
+				position: absolute;
+				top: 50%;
+			}
+		}
+
+		// Checked
+		.lv-form-input:checked ~ .lv-input-selection-label {
+			&:before {
+				content: '\f192';
+			}
+		}
+		// Focus
+		.lv-form-input:focus ~ .lv-input-selection-label {
+			&:before {
+				color: darken($comet, 10%);
+			}
+		}
+		// Focus and checked
+		.lv-form-input:focus:checked ~ .lv-input-selection-label {
+			&:before {
+				color: darken($summer-sky, 10%);
+			}
+		}
+		// Disabled
+		.lv-form-input:disabled ~ .lv-input-selection-label {
+			cursor: not-allowed;
+
+			&:before {
+				color: lighten($comet, 15%);
+			}
+		}
+		// Checked and disabled
+		.lv-form-input:disabled:checked ~ .lv-input-selection-label {
+			&:before {
+				color: lighten($summer-sky, 10%);
+			}
+		}
+	}
+	// Radio with left aligned label
+	&.left-label {
+		.lv-input-radio {
+			.lv-input-selection-label {
+				padding: {
+					left: 0;
+					right: 21px;
+				}
+
+				&:before {
+					left: auto;
+					right: 0;
+				}
+			}
+		}
+	}
+
+	// Checkbox
+	.lv-input-checkbox {
+		.lv-input-selection-label {
+			display: inline-block;
+			padding-left: 21px;
+			white-space: normal;
+
+			&:before {
+				color: $comet;
+				content: '\f0c8';
+				font: {
+					family: 'Font Awesome 5 Free';
+					weight: 400;
+				}
+				left: 0;
+				margin-top: -12px;
+				position: absolute;
+				top: 50%;
+			}
+		}
+
+		// Checked
+		.lv-form-input:checked ~ .lv-input-selection-label {
+			&:before {
+				content: '\f14a';
+			}
+		}
+		// Focus
+		.lv-form-input:focus ~ .lv-input-selection-label {
+			&:before {
+				color: darken($comet, 10%);
+			}
+		}
+		// Focus and checked
+		.lv-form-input:focus:checked ~ .lv-input-selection-label {
+			&:before {
+				color: darken($summer-sky, 10%);
+			}
+		}
+		// Disabled
+		.lv-form-input:disabled ~ .lv-input-selection-label {
+			cursor: not-allowed;
+
+			&:before {
+				color: lighten($comet, 15%);
+			}
+		}
+		// Checked and disabled
+		.lv-form-input:disabled:checked ~ .lv-input-selection-label {
+			&:before {
+				color: lighten($summer-sky, 10%);
+			}
+		}
+	}
+	//Checkbox with left aligned label
+	&.left-label {
+		.lv-input-checkbox {
+			.lv-input-selection-label {
+				padding: {
+					left: 0;
+					right: 21px;
+				}
+
+				&:before {
+					left: auto;
+					right: 0;
+				}
+			}
+		}
+	}
+}
+
+// Radio and Checkbox state styles
+.lv-selection-group {
+	// Error
+	&.lv-input-error {
+		.lv-input-radio,
+		.lv-input-checkbox {
+			.lv-input-selection-label:before {
+				color: $error-input-border;
+			}
+			.lv-form-input:focus ~ .lv-input-selection-label:before,
+			.lv-form-input:focus:checked ~ .lv-input-selection-label:before {
+				color: darken($error-input-border, 10%);
+			}
+		}
+		.lv-help-text {
+			color: $error-input-color;
+		}
+	}
+	// Warning
+	&.lv-input-warning {
+		.lv-input-radio,
+		.lv-input-checkbox {
+			.lv-input-selection-label:before {
+				color: $warning-input-border;
+			}
+			.lv-form-input:focus ~ .lv-input-selection-label:before,
+			.lv-form-input:focus:checked ~ .lv-input-selection-label:before {
+				color: darken($warning-input-border, 10%);
+			}
+		}
+		.lv-help-text {
+			color: $warning-input-color;
+		}
+	}
+}
+
+// Buttons
+// default
+.btn {
+	background: $default-btn-background;
+	border-color: $default-btn-border;
+	color: $default-btn-color;
+
+	&:hover {
+		background: $default-btn-background-hover;
+		border-color: $default-btn-border-hover;
+		color: $default-btn-color-hover;
+	}
+	&:active {
+		background: $default-btn-background-active;
+		border-color: $default-btn-border-active;
+		color: $default-btn-color-active;
+	}
+	&:focus {
+		background: $default-btn-background-focus;
+		border-color: $default-btn-border-focus;
+		color: $default-btn-color-focus;
+	}
+	&:disabled {
+		background: $default-btn-background-disabled;
+		border-color: $default-btn-border-disabled;
+		color: $default-btn-color-disabled;
+	}
+}
+// primary
+.btn-primary {
+	background: $primary-btn-background;
+	border-color: $primary-btn-border;
+	color: $primary-btn-color;
+
+	&:hover {
+		background: $primary-btn-background-hover;
+		border-color: $primary-btn-border-hover;
+		color: $primary-btn-color-hover;
+	}
+	&:not(:disabled):not(.disabled):active,
+	&:active {
+		background: $primary-btn-background-active;
+		border-color: $primary-btn-border-active;
+		color: $primary-btn-color-active;
+	}
+	&:focus {
+		background: $primary-btn-background-focus;
+		border-color: $primary-btn-border-focus;
+		color: $primary-btn-color-focus;
+		box-shadow: 0 0 3.7px 3.2px lighten($primary-btn-border-focus, 5%);
+		outline: none;
+	}
+	&:disabled {
+		background: $primary-btn-background-disabled;
+		border-color: $primary-btn-border-disabled;
+		color: $primary-btn-color-disabled;
+	}
+}

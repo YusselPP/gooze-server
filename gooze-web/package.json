@@ -1,0 +1,124 @@
+{
+	"name": "gooze-web",
+	"version": "1.0.0",
+	"description": "Gooze Web App",
+	"repository": {},
+	"license": "",
+	"private": true,
+	"dependencies": {
+		"@fortawesome/fontawesome-free-webfonts": "^1.0.4",
+		"bootstrap": "^4.0.0",
+		"compass-mixins": "^0.12.10",
+		"jquery": "^3.3.1",
+		"moment": "^2.21.0",
+		"popper.js": "^1.12.9",
+		"prop-types": "^15.6.0",
+		"react": "^16.3.0",
+		"react-dom": "^16.3.0",
+		"react-dom-factories": "^1.0.2",
+		"redux": "^3.7.2",
+		"redux-observable": "^0.17.0",
+		"redux-router5": "^5.2.1",
+		"router5": "^5.8.0",
+		"rxjs": "^5.5.6"
+	},
+	"devDependencies": {
+		"babel-core": "^6.26.0",
+		"babel-loader": "^7.1.2",
+		"babel-plugin-transform-object-rest-spread": "^6.26.0",
+		"babel-polyfill": "^6.26.0",
+		"babel-preset-env": "^1.6.1",
+		"babel-preset-react": "^6.24.1",
+		"browser-sync": "^2.23.6",
+		"concurrently": "^3.5.1",
+		"css-loader": "^0.28.9",
+		"eslint": "^4.16.0",
+		"eslint-plugin-react": "^7.6.0",
+		"express": "^4.16.3",
+		"extract-text-webpack-plugin": "^3.0.2",
+		"file-loader": "^1.1.6",
+		"html-loader": "^0.5.5",
+		"html-webpack-plugin": "^2.30.1",
+		"http-proxy-middleware": "^0.18.0",
+		"node-sass": "^4.7.2",
+		"sass-loader": "^6.0.6",
+		"serve-static": "^1.13.2",
+		"style-loader": "^0.20.1",
+		"webpack": "3.10.0",
+		"webpack-bundle-analyzer": "^2.11.1",
+		"webpack-merge": "^4.1.1"
+	},
+	"eslintConfig": {
+		"extends": [
+			"eslint:recommended",
+			"plugin:react/recommended"
+		],
+		"rules": {
+			"no-console": "warn",
+			"no-plusplus": "error",
+			"prefer-const": "warn",
+			"arrow-parens": "warn",
+			"arrow-spacing": "warn",
+			"curly": [
+				"error",
+				"all"
+			],
+			"eqeqeq": [
+				"error",
+				"always"
+			],
+			"array-callback-return": "warn",
+			"no-alert": "error",
+			"no-eval": "error",
+			"no-floating-decimal": "error",
+			"no-implied-eval": "error",
+			"no-invalid-this": "error",
+			"no-labels": "error",
+			"no-new": "error",
+			"no-script-url": "error",
+			"no-self-compare": "error",
+			"no-sequences": "error",
+			"no-throw-literal": "warn",
+			"no-unused-expressions": "error",
+			"no-with": "error",
+			"prefer-promise-reject-errors": "warn",
+			"default-case": "warn",
+			"quotes": [
+				"warn",
+				"double"
+			],
+			"jsx-quotes": [
+				"warn",
+				"prefer-double"
+			]
+		},
+		"parserOptions": {
+			"ecmaVersion": 6,
+			"sourceType": "module",
+			"ecmaFeatures": {
+				"jsx": true,
+				"experimentalObjectRestSpread": true
+			}
+		},
+		"env": {
+			"browser": true,
+			"es6": true
+		}
+	},
+	"scripts": {
+		"build:staging": "webpack --config webpack.staging.js",
+		"build:dev": "webpack --config webpack.dev.js",
+		"build:dev:watch": "webpack --config webpack.dev.js --watch",
+        "prebuild:dev:analysis": "webpack --config webpack.dev.js --profile --json > stats.json",
+        "build:dev:analysis": "webpack-bundle-analyzer stats.json",
+		"build:prod": "webpack --config webpack.prod.js",
+		"prebuild:prod:analysis": "webpack --config webpack.prod.js --profile --json > stats.json",
+		"build:prod:analysis": "webpack-bundle-analyzer stats.json",
+		"live": "browser-sync start --files 'dist' --no-open --proxy http://localhost:8080 --ws",
+		"proxy": "node tests/proxy/main.js",
+		"lint": "eslint src",
+		"clean": "rimraf dist/*",
+		"prestart": "yarn clean",
+		"start": "concurrently \"yarn build:dev:watch\" \"yarn proxy\" \"yarn live\""
+	}
+}

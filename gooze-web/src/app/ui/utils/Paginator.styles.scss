@@ -1,0 +1,25 @@
+@import "base.styles";
+
+$page-input-font-size: 0.75rem;
+
+.lv-paginator {
+
+  font-size: $page-input-font-size;
+
+  .page-input {
+    line-height: 1.25;
+    font-size: inherit;
+    padding: 0.5rem 0.75rem;
+    width: $page-input-font-size * 4 + 1.5rem;
+  }
+
+  .page-link.total-pages {
+    background-color: transparent;
+    color: initial;
+    cursor: default;
+  }
+
+  .page-item {
+    @include user-select(none);
+  }
+}

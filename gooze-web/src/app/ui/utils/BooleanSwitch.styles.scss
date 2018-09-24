@@ -1,0 +1,79 @@
+@import "base.styles";
+
+.toggle-switch {
+  position: relative;
+
+  label {
+    padding-left: 45px;
+    position: relative;
+    cursor: pointer;
+
+    &:after,
+    &:before {
+      content: '';
+      position: absolute;
+      @include transition(background linear 100ms, left linear 100ms, right linear 100ms);
+    }
+
+    &:after {
+      background: lighten($trout, 8%);
+      border-radius: 30px;
+      height: 20px;
+      left: 0;
+      top: 50%;
+      @include transform(translateY(-50%));
+      width: 40px;
+      z-index: 1;
+    }
+
+    &:before {
+      background: $white;
+      border-radius: 18px;
+      height: 18px;
+      left: 1px;
+      top: 50%;
+      @include transform(translateY(-50%));
+      width: 18px;
+      z-index: 2;
+    }
+  }
+
+  input[type=checkbox] {
+    position: absolute;
+    @include opacity(0);
+
+    &:checked + label {
+      &:after {
+        background: $curious-blue;
+      }
+      &:before {
+        left: 21px;
+      }
+    }
+  }
+
+  // Right positioned toggle switch
+  &.right {
+    label {
+      padding: {
+        left: 0;
+        right: 45px;
+      }
+
+      &:after {
+        left: auto;
+        right: 0;
+      }
+
+      &:before {
+        left: auto;
+        right: 21px;
+      }
+    }
+
+    input[type=checkbox]:checked + label:before {
+      left: auto;
+      right: 1px;
+    }
+  }
+}

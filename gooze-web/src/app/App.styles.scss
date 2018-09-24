@@ -1,0 +1,27 @@
+@import 'ui/utils/base.styles';
+
+// Sticky footer styles
+html {
+	position: relative;
+	min-height: 100%;
+}
+body {
+	//background: $silver;
+	margin-bottom: 34px; // Same height as the footer
+}
+.footer {
+	bottom: 0;
+	color: $white;
+	font-size: 11px;
+	height: 34px;
+	line-height: 34px;
+	position: absolute;
+	width: 100%;
+}
+
+.lv-nav {
+	margin-bottom: 16px;
+}
+.lv-nav-link {
+	font-size: 14px;
+}

@@ -1,0 +1,159 @@
+//== Colors
+//
+$white: #FFF;
+$black: #000;
+$gray:	#CCC;
+
+//== Gray-ish
+//
+$athens-gray:		 #F4F5F7;
+$charcoal-gray:		 #2B2E38;
+$comet:				 #5D6272;
+$dark-charcoal-gray: #19191F;
+$dove-gray:			 #696969;
+$light-gray:		 #CED0D9;
+$mercury:			 #E5E5E5;
+$night-rider:		 #333;
+$santas-gray:		 #979CAD;
+$silver:			 #E6E8EA;
+$silver-chalice:	 #A7A7A7;
+$very-light-gray:	 #CBCBCB;
+$trout:              #4B4F5C;
+
+//== Blue-ish
+//
+$cloud-burst:	 #222B45;
+$curious-blue:	 #318DDE;
+$endeavour:		 #055DAB;
+$lochmara:		 #0081CB;
+$rhino: 		 #35436C;
+$summer-sky:	 #318DDE;
+
+//== Red-ish
+//
+$pomegranate: #F52323;
+
+//== Yellow-ish
+$middle-yellow-red: #E8B47B;
+$sandy-brown:       #F5A752;
+
+//== Green-ish
+$jewel: #0C7C26;
+
+//== Orange-ish
+$safety-orange: #FF7800;
+$yellow-orange: #FF9C44;
+
+//== Gradients
+//
+$gradient-common-areas: linear-gradient(to bottom, $charcoal-gray, $dark-charcoal-gray);
+
+//== Input styles colors
+//
+
+// Default
+// normal
+$default-input-border: $gray;
+$default-input-color:  $night-rider;
+$default-input-background: $white;
+$default-input-placeholder: $silver-chalice;
+// hover
+$default-input-border-hover: darken($default-input-border, 10%);
+$default-input-color-hover: darken($default-input-color, 10%);
+$default-input-background-hover: darken($default-input-background, 5%);
+// focus
+$default-input-outline-focus: lighten($default-input-border, 10%);
+// active
+$default-input-background-active: darken($default-input-background, 10%);
+// disabled
+$default-input-border-disabled: lighten($default-input-border, 10%);
+$default-input-color-disabled: lighten($default-input-color, 10%);
+$default-input-background-disabled: lighten($default-input-background, 10%);
+
+// Primary
+// normal
+$primary-input-border: $rhino;
+// hover
+// focus
+// active
+// disabled
+
+// Success
+// normal
+$success-input-color: $jewel;
+// hover
+// focus
+// active
+// disabled
+
+// Warning
+// normal
+$warning-input-border: $sandy-brown;
+$warning-input-color: $middle-yellow-red;
+// hover
+// focus
+// active
+// disabled
+
+// Info
+// normal
+// hover
+// focus
+// disabled
+// active
+
+// Error
+// normal
+$error-input-border: $pomegranate;
+$error-input-color: $pomegranate;
+// hover
+// focus
+// active
+// disabled
+
+//== Button styles
+//
+
+// Default
+// normal
+$default-btn-background: $lochmara;
+$default-btn-border: $lochmara;
+$default-btn-color: $white;
+// active
+$default-btn-background-active: $lochmara;
+$default-btn-border-active: $endeavour;
+$default-btn-color-active: $white;
+// focus
+$default-btn-background-focus: $lochmara;
+$default-btn-border-focus: $lochmara;
+$default-btn-color-focus: $white;
+// hover
+$default-btn-background-hover: $endeavour;
+$default-btn-border-hover: $endeavour;
+$default-btn-color-hover: $white;
+// disabled
+$default-btn-background-disabled: $lochmara;
+$default-btn-border-disabled: $mercury;
+$default-btn-color-disabled: $white;
+
+// Primary
+// normal
+$primary-btn-background: $safety-orange;
+$primary-btn-border: $safety-orange;
+$primary-btn-color: $white;
+// active
+$primary-btn-background-active: $primary-btn-background;
+$primary-btn-border-active: $yellow-orange;
+$primary-btn-color-active: $white;
+// focus
+$primary-btn-background-focus: $primary-btn-background;
+$primary-btn-border-focus: $primary-btn-border;
+$primary-btn-color-focus: $white;
+// hover
+$primary-btn-background-hover: darken($yellow-orange, 15%);
+$primary-btn-border-hover: darken($yellow-orange, 15%);
+$primary-btn-color-hover: $white;
+// disabled
+$primary-btn-background-disabled: $yellow-orange;
+$primary-btn-border-disabled: $yellow-orange;
+$primary-btn-color-disabled: $white;
