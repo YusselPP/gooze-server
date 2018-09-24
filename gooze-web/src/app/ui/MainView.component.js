@@ -15,11 +15,6 @@ export default MainView;
 
 function MainView() {
 
-    state$.subscribe(
-        (state) => {
-            console.log("state: ", state)
-        }
-    );
     const route$ = state$.pluck("router", "route").distinctUntilChanged();
 
     const currentView$ = (

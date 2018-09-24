@@ -21,8 +21,6 @@ function report(state = defaultState, action = {}) {
 
 	const {type} = action;
 
-	console.log("action type: " + type);
-
 	switch (type) {
 
 		case FETCH_PAYMENTS_SUCCESS: {
