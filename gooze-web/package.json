@@ -109,16 +109,19 @@
 		"build:staging": "webpack --config webpack.staging.js",
 		"build:dev": "webpack --config webpack.dev.js",
 		"build:dev:watch": "webpack --config webpack.dev.js --watch",
-        "prebuild:dev:analysis": "webpack --config webpack.dev.js --profile --json > stats.json",
-        "build:dev:analysis": "webpack-bundle-analyzer stats.json",
+    "prebuild:dev:analysis": "webpack --config webpack.dev.js --profile --json > stats.json",
+    "build:dev:analysis": "webpack-bundle-analyzer stats.json",
 		"build:prod": "webpack --config webpack.prod.js",
+    "prebuild:staging": "yarn clean:public",
+    "prebuild:prod": "yarn clean:public",
 		"prebuild:prod:analysis": "webpack --config webpack.prod.js --profile --json > stats.json",
 		"build:prod:analysis": "webpack-bundle-analyzer stats.json",
 		"live": "browser-sync start --files 'dist' --no-open --proxy http://localhost:8080 --ws",
 		"proxy": "node tests/proxy/main.js",
 		"lint": "eslint src",
-		"clean": "rimraf dist/*",
-		"prestart": "yarn clean",
+		"clean:dev": "rimraf dist/*",
+    "clean:public": "rimraf ../client/admin/*",
+		"prestart": "yarn clean:dev",
 		"start": "concurrently \"yarn build:dev:watch\" \"yarn proxy\" \"yarn live\""
 	}
 }
