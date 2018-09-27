@@ -10,6 +10,8 @@ module.exports = function(UserTransaction) {
   UserTransaction.validatesPresenceOf('toUserId');
 
   UserTransaction.paymentReport = function(cb) {
+    const Payment = UserTransaction.app.models.Payment;
+
     cb = typeof cb === 'function' ? cb : undefined;
 
     const promise = (
@@ -41,8 +43,31 @@ module.exports = function(UserTransaction) {
             }
           },
           {
+            $lookup: {
+              from: 'Payment',
+              let: {toUserId: '$toUserId'},
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$userId', '$$toUserId']
+                    }
+                  }
+                }
+              ],
+              as: 'toUserPayment'
+            }
+          },
+          {
+            $unwind: {
+              path: '$toUserPayment',
+              preserveNullAndEmptyArrays: true
+            }
+          },
+          {
             $addFields: {
-              id: '$_id'
+              id: '$_id',
+              toUserPaypalCustomerId: '$toUserPayment.paypalCustomerId'
             }
           },
           {
@@ -55,7 +80,7 @@ module.exports = function(UserTransaction) {
             $skip: 0
           },
           {
-            $limit: 100
+            $limit: 10000
           }];
 
           db.collection('UserTransaction').aggregate(aggregatePipe, function(err, data) {
@@ -68,6 +93,34 @@ module.exports = function(UserTransaction) {
           });
         });
       })
+        .then(function(transactions) {
+          const transWCustomer = (
+            transactions
+              .filter((trans) => typeof trans.toUserPaypalCustomerId === 'string')
+          );
+
+          return (
+            Payment
+              .findCustomers(transWCustomer.map((trans) => trans.toUserPaypalCustomerId))
+              .then(function(customers) {
+                return customers
+                  .forEach(function(customer) {
+                    if (customer) {
+                      const foundIndex = transactions.findIndex((trans) => trans.toUserPaypalCustomerId === customer.id);
+
+                      debug('paymentReport - foundIndex:', foundIndex);
+
+                      if (foundIndex >= 0 && customer.paypalAccounts[0]) {
+                        transactions[foundIndex].toUserPayment.paypalEmail = customer.paypalAccounts[0].email;
+                        debug('paymentReport - found transaction:', transactions[foundIndex]);
+                        debug('paymentReport - customer.paypalAccounts[0].email:', customer.paypalAccounts[0].email);
+                      }
+                    }
+                  });
+              })
+              .then(() => transactions)
+          );
+        })
   );
 
     if (!cb) {

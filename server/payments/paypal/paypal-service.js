@@ -1,5 +1,3 @@
-'use strict';
-
 var debug = require('debug')('gooze:paypal-service');
 var braintree = require('braintree');
 
@@ -21,6 +19,7 @@ var PayPalService = {
   createCharge: createCharge,
   createCustomer: createCustomer,
   findCustomer: findCustomer,
+  findCustomers: findCustomers,
   findPaymentMethods: findPaymentMethods,
   createPaymentMethod: createPaymentMethod,
   deletePaymentMethod: deletePaymentMethod
@@ -109,6 +108,35 @@ function findCustomer(id) {
         } else {
           resolve(response);
         }
+      });
+    })
+  );
+}
+
+/**
+ * Find customers by id
+ * @param {Array} ids.
+ * @returns {Promise<[Customer]>}
+ */
+function findCustomers(ids) {
+  debug('findCustomers - ids', ids);
+  return (
+    new Promise(function(resolve, reject) {
+      const customers = [];
+      const customerStream = gateway.customer.search(function(search) {
+        search.ids().in(ids);
+      });
+
+      customerStream.on('data', function(customer) {
+        customers.push(customer);
+      });
+
+      customerStream.on('end', function() {
+        resolve(customers);
+      });
+
+      customerStream.on('error', function(err) {
+        reject(err);
       });
     })
   );

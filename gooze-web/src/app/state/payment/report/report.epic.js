@@ -27,28 +27,28 @@ function performPaymentsFetch(action$, store) {
 
 				try {
 
-                    return (
-                        Observable
-                            .ajax({
-                                url: `${appConfig.apiPath}/UserTransactions/paymentReport`,
-                                responseType: "json",
-                                headers: {
-                                	"Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
-                                    "Content-Type": "application/json"
-                                }
-                            })
-                            .map(({response}) => fetchPaymentsSuccess({payments: response}))
-                            .catch(function (error) {
+          return (
+              Observable
+                  .ajax({
+                      url: `${appConfig.apiPath}/UserTransactions/paymentReport`,
+                      responseType: "json",
+                      headers: {
+                        "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                        "Content-Type": "application/json"
+                      }
+                  })
+                  .map(({response}) => fetchPaymentsSuccess({payments: response}))
+                  .catch(function (error) {
 
-                                const msg = `Can't access payments: ${errorMessage(error)}`;
+                      const msg = `Can't access payments: ${errorMessage(error)}`;
 
-                                log.error(msg, error);
-                                // toastError(msg);
+                      log.error(msg, error);
+                      // toastError(msg);
 
-                                return Observable.of(fetchPaymentsFailure({error}));
-                            })
+                      return Observable.of(fetchPaymentsFailure({error}));
+                  })
 
-                    );
+          );
 
 				} catch (error) {
                     return Observable.of(

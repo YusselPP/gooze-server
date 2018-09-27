@@ -1,5 +1,3 @@
-'use strict';
-
 var debug = require('debug')('gooze:payment');
 var Conekta = require('../../server/payments/conekta/conekta-service');
 var paymentProvider = require('../../server/payments/PaymentService')(Conekta);
@@ -82,6 +80,31 @@ module.exports = function(Payment) {
       {arg: 'id', type: 'string', required: true}
     ],
     returns: {root: true, type: 'object'}
+  });
+
+  Payment.findCustomers = function(ids, cb) {
+    var promise = PayPalService.findCustomers(ids);
+
+    if (cb) {
+      promise
+        .then(function(customers) {
+          cb(null, customers);
+        })
+        .catch(function(err) {
+          cb(err);
+        });
+      return;
+    }
+
+    return promise;
+  };
+
+  Payment.remoteMethod('findCustomers', {
+    http: {verb: 'get', path: '/findCustomers'},
+    accepts: [
+      {arg: 'ids', type: 'array', required: true}
+    ],
+    returns: {root: true, type: 'array'}
   });
 
   Payment.findPaymentMethods = function(id, cb) {

@@ -32,6 +32,7 @@ function PaymentReport() {
                         <tr key={i}>
                             {/*<td>{payment.id}</td>*/}
                             <td title={payment.id}>{payment.toUser && payment.toUser.username}</td>
+                            <td>{payment.toUserPayment && payment.toUserPayment.paypalEmail}</td>
                             <td>{moment(payment.createdAt).format("YYYY-MM-DD hh:mm:ss")}</td>
                             <td>{payment.amount}</td>
                             <td>{displayStatus(payment.goozeStatus)}</td>
@@ -45,26 +46,27 @@ function PaymentReport() {
 
 	return (
 	    <div className="col-12">
-            <div className="row">
-                <h3>Pagos</h3>
-                <hr/>
-            </div>
-            <div className="row">
-                <table className="table">
-                    <thead>
-                    <tr>
-                        {/*<th scope="col">Id</th>*/}
-                        <th scope="col">Usuario</th>
-                        <th scope="col">Fecha</th>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">Status</th>
-                    </tr>
-                    </thead>
-                    <rxDom.tbody>{
-                        filteredPayments$
-                    }</rxDom.tbody>
-                </table>
-            </div>
+          <div className="row">
+              <h3>Pagos</h3>
+              <hr/>
+          </div>
+          <div className="row">
+              <table className="table">
+                  <thead>
+                  <tr>
+                      {/*<th scope="col">Id</th>*/}
+                      <th scope="col">Usuario</th>
+                      <th scope="col">PayPal Email</th>
+                      <th scope="col">Fecha</th>
+                      <th scope="col">Cantidad</th>
+                      <th scope="col">Status</th>
+                  </tr>
+                  </thead>
+                  <rxDom.tbody>{
+                      filteredPayments$
+                  }</rxDom.tbody>
+              </table>
+          </div>
         </div>
 	);
 
