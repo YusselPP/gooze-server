@@ -83,7 +83,13 @@ module.exports = function(Payment) {
   });
 
   Payment.findCustomers = function(ids, cb) {
-    var promise = PayPalService.findCustomers(ids);
+    var promise;
+
+    if (ids.length < 1) {
+      promise = Promise.resolve([]);
+    } else {
+      promise = PayPalService.findCustomers(ids);
+    }
 
     if (cb) {
       promise

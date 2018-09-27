@@ -1,14 +1,19 @@
 
-import {combineReducers} from "redux";
 import {ACTION_TYPES} from "./report.actions";
 
 const {
-    FETCH_PAYMENTS,
-    FETCH_PAYMENTS_SUCCESS,
-    FETCH_PAYMENTS_FAILURE
+  FETCH_PAYMENTS,
+  FETCH_PAYMENTS_SUCCESS,
+  FETCH_PAYMENTS_FAILURE,
+  SET_FILTER_FROM_DATE,
+  SET_FILTER_TO_DATE
 } = ACTION_TYPES;
 
 const defaultState = {
+  parameters: {
+    fromDate: undefined,
+    toDate: undefined
+  },
 	results: {
 		payments: [],
 		error: undefined
@@ -30,10 +35,10 @@ function report(state = defaultState, action = {}) {
 
 			return {
 				...state,
-                results: {
-                    payments,
-                    error
-                }
+          results: {
+              payments,
+              error
+          }
 			};
 		}
 
@@ -42,12 +47,38 @@ function report(state = defaultState, action = {}) {
 
 			return {
 				...state,
-                results: {
+        results: {
 					payments: [],
-                    error
-                }
+          error
+        }
 			};
 		}
+
+    case SET_FILTER_FROM_DATE: {
+      const {fromDate} = action;
+      const {parameters} = state;
+
+      return {
+        ...state,
+        parameters: {
+          ...parameters,
+          fromDate
+        }
+      };
+    }
+
+    case SET_FILTER_TO_DATE: {
+      const {toDate} = action;
+      const {parameters} = state;
+
+      return {
+        ...state,
+        parameters: {
+          ...parameters,
+          toDate
+        }
+      };
+    }
 
 		default: {
 			return state;

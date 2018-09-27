@@ -9,10 +9,35 @@ module.exports = function(UserTransaction) {
   UserTransaction.validatesPresenceOf('fromUserId');
   UserTransaction.validatesPresenceOf('toUserId');
 
-  UserTransaction.paymentReport = function(cb) {
+  UserTransaction.paymentReport = function(fromDate, toDate, cb) {
     const Payment = UserTransaction.app.models.Payment;
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    const matcher = {};
 
     cb = typeof cb === 'function' ? cb : undefined;
+
+    if (isValidDate(from)) {
+      if (matcher.createdAt) {
+        matcher.createdAt.$gte = from;
+      } else {
+        matcher.createdAt = {
+          $gte: from
+        };
+      }
+    }
+
+    if (isValidDate(to)) {
+      to.setDate(to.getDate() + 1);
+
+      if (matcher.createdAt) {
+        matcher.createdAt.$lt = to;
+      } else {
+        matcher.createdAt = {
+          $lt: to
+        };
+      }
+    }
 
     const promise = (
       new Promise(function(resolve, reject) {
@@ -21,6 +46,9 @@ module.exports = function(UserTransaction) {
             return reject(err);
 
           const aggregatePipe = [{
+            $match: matcher
+          },
+          {
             $lookup: {
               from: 'GoozeUser',
               let: {toUserId: '$toUserId'},
@@ -139,7 +167,13 @@ module.exports = function(UserTransaction) {
   UserTransaction.remoteMethod('paymentReport', {
     http: {verb: 'get'},
     accepts: [
+      {arg: 'fromDate', type: 'string'},
+      {arg: 'toDate', type: 'string'}
     ],
     returns: {type: [], root: true}
   });
 };
+
+function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}

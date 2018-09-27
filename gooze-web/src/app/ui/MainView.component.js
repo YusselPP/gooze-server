@@ -55,7 +55,7 @@ function MainView() {
                 }</rxDom.div>
             </div>
             {/*<Modal/>*/}
-            {/*<Toast/>*/}
+            <Toast/>
         </div>
 
     );
