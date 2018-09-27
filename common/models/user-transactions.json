@@ -22,6 +22,11 @@
     "paymentMethod": {
       "type": "string",
       "required": true
+    },
+    "goozeStatus": {
+      "type": "string",
+      "required": true,
+      "default": "pending"
     }
   },
   "validations": [],
