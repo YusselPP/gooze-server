@@ -711,10 +711,43 @@ module.exports = function(DateRequest) {
 
               if (datesService) {
                 updatedRequests.forEach(function(updatedRequest) {
-                  datesService.emitDateStatusChanged(updatedRequest.sender.id, updatedRequest);
+                  datesService.emitDateStatusChanged(updatedRequest.senderId, updatedRequest);
+                  datesService.emitDateStatusChanged(updatedRequest.recipientId, updatedRequest);
                 });
               } else {
                 console.error(funcName + 'datesService not available yet');
+              }
+
+              const chatService = DateRequest.app.chatSocketChannel.customService;
+              if (chatService) {
+                updatedRequests.forEach(function(updatedRequest) {
+                  const updatedRequestJson = updatedRequest.toJSON();
+                  const username = updatedRequestJson.recipient.username;
+                  const chatJson = updatedRequestJson.chat;
+                  const mode = 'client';
+
+                  const message = {
+                    chatId: chatJson.id,
+                    text: 'service.dates.becameUnavailable|' + username,
+                    senderId: updatedRequestJson.recipientId,
+                    type: 'info',
+                    status: 'sent',
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                  };
+
+                  debug(funcName, '-', chatJson);
+
+                  chatService.sendMessage([message, username, chatJson, updatedRequest, mode], function(err) {
+                    if (err) {
+                      console.error(funcName + ' - Failed to send createChargeSuccess message', err);
+                      return;
+                    }
+                    debug(funcName + ' - "User not available" message sent successfully');
+                  });
+                });
+              } else {
+                console.error(funcName + 'chatService not available yet');
               }
             })
             .then(() => response)
