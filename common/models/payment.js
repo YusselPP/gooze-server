@@ -152,26 +152,18 @@ module.exports = function(Payment) {
   });
 
   Payment.createPaymentMethod = function(paymentMethod, cb) {
-    var promise = PayPalService.createPaymentMethod(paymentMethod);
+    var promise = (
+      PayPalService.createPaymentMethod(paymentMethod)
+        .then(function(response) {
+          debug('createPaymentMethod -', response);
+          return {response};
+        })
+    );
 
     if (cb) {
       promise
         .then(function(response) {
-          var parsedResponse;
-          if (response.success) {
-            parsedResponse = {
-              name: response.paymentMethod.email,
-              token: response.paymentMethod.token,
-              imageUrl: response.paymentMethod.imageUrl
-            };
-          } else {
-            parsedResponse = {
-              error: {
-                message: response.message
-              }
-            };
-          }
-          cb(null, parsedResponse);
+          cb(null, response);
         })
         .catch(function(err) {
           cb(err);
