@@ -250,7 +250,10 @@ module.exports = function(DateRequest) {
     var promise, notifiedUserId, starter;
     var userId = options && options.accessToken && options.accessToken.userId;
     var GZEDate = DateRequest.app.models.GZEDate;
+    var GoozeUser = DateRequest.app.models.GoozeUser;
     var dateId = dateRequest.date && dateRequest.date.id;
+    var senderId = dateRequest.sender && dateRequest.sender.id;
+    var recipientId = dateRequest.recipient && dateRequest.recipient.id;
 
     cb = typeof cb === 'function' ? cb : undefined;
     userId = (userId instanceof DateRequest.dataSource.ObjectID) ? userId.toJSON() : userId;
@@ -294,21 +297,42 @@ module.exports = function(DateRequest) {
 
           return date.updateAttributes(newStatus);
         })
-        .then(function(date) {
-          dateRequest.date = date;
-
+        .then(function() {
+          return (
+            Promise.all([
+              DateRequest.findById(dateRequest.id),
+              GoozeUser.findById(senderId),
+              GoozeUser.findById(recipientId)
+            ])
+          );
+        })
+        .then(function([dateRequest, sender, recipient]) {
+          var updatedUser, notifiedUser, result;
           var datesService = DateRequest.app.datesSocketChannel.customService;
 
+          if (starter === 'senderStarted') {
+            updatedUser = sender;
+            notifiedUser = recipient;
+          } else if (starter === 'recipientStarted') {
+            updatedUser = recipient;
+            notifiedUser = sender;
+          }
+
           if (datesService) {
-            datesService.emitDateStatusChanged(notifiedUserId, dateRequest);
+            datesService.emitDateStatusChanged(notifiedUserId, dateRequest, notifiedUser);
           } else {
             console.error('DateRequest.startDate - datesService not available yet');
           }
 
+          result = {
+            dateRequest: dateRequest,
+            user: updatedUser
+          };
+
           if (cb) {
-            cb(null, dateRequest);
+            cb(null, result);
           } else {
-            return dateRequest;
+            return result;
           }
         })
         .catch(function(reason) {
