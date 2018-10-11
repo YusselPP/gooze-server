@@ -87,19 +87,44 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
       senderId + ', to user.id: ' + recipientId
     );
 
-    DateRequest.find({
-      where: {
-        senderId: senderId,
-        recipientId: recipientId,
-        recipientClosed: false,
-        or: [
-          {status: DateRequest.constants.status.sent},
-          {status: DateRequest.constants.status.received},
-          {status: DateRequest.constants.status.accepted},
-          {status: DateRequest.constants.status.onDate}
-        ]
-      }
-    })
+    GoozeUser.findById(senderId)
+      .then(function(user) {
+        if (!user) {
+          debug('dateRequestSent - User not found, id: ' + senderId);
+          error = new Error('Invalid user id');
+          error.statusCode = error.status = 422;
+          error.code = 'MODEL_NOT_FOUND';
+          error.details = {
+            model: 'user'
+          };
+          throw error;
+        }
+        const userJson = user.toJSON();
+
+        debug('dateRequestSent - payment: ', userJson.payment);
+        // Payment method validation
+        if (!userJson.payment || !userJson.payment.paypalCustomerId) {
+          error = new Error('A payment method is required');
+          error.statusCode = error.status = 422;
+          error.code = 'PAYMENT_METHOD_REQUIRED';
+          error.details = {};
+          throw error;
+        }
+
+        return DateRequest.find({
+          where: {
+            senderId: senderId,
+            recipientId: recipientId,
+            recipientClosed: false,
+            or: [
+              {status: DateRequest.constants.status.sent},
+              {status: DateRequest.constants.status.received},
+              {status: DateRequest.constants.status.accepted},
+              {status: DateRequest.constants.status.onDate}
+            ]
+          }
+        });
+      })
       .then(function(dateRequests) {
         if (dateRequests.length > 0) {
           debug('dateRequestSent - You have already sent a request to this user. Waiting for the user answer');
@@ -202,7 +227,6 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
     DateRequest.findById(dateRequestId)
       .then(function(dateRequest) {
-        var findChatPromise;
         if (!dateRequest) {
           debug('acceptRequest - Request not found');
           error = new Error('Request not found');
@@ -211,6 +235,39 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           error.details = {
             dateRequestId: dateRequestId
           };
+          throw error;
+        }
+
+        return (
+          GoozeUser.findById(dateRequest.recipientId)
+            .then((recipient) => {
+              if (!recipient) {
+                debug('acceptRequest - User not found, id: ' + dateRequest.recipientId);
+                error = new Error('User not found');
+                error.statusCode = error.status = 404;
+                error.code = 'MODEL_NOT_FOUND';
+                error.details = {
+                  model: 'GoozeUser',
+                  id: dateRequest.recipientId
+                };
+                throw error;
+              }
+
+              return [dateRequest, recipient];
+            })
+        );
+      })
+      .then(function([dateRequest, recipient]) {
+        let findChatPromise;
+        const userJson = recipient.toJSON();
+
+        debug('dateRequestSent - payment: ', userJson.payment);
+        // Payment method validation
+        if (!userJson.payment || !userJson.payment.paypalCustomerId) {
+          error = new Error('A payment method is required');
+          error.statusCode = error.status = 422;
+          error.code = 'PAYMENT_METHOD_REQUIRED';
+          error.details = {};
           throw error;
         }
 
