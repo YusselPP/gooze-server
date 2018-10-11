@@ -15,7 +15,8 @@ const {
 
 	FETCH_PAYMENTS,
   SET_FILTER_FROM_DATE,
-  SET_FILTER_TO_DATE
+  SET_FILTER_TO_DATE,
+  SET_FILTER_STATUS
 
 } = ACTION_TYPES;
 
@@ -28,13 +29,23 @@ function performPaymentsFetch(action$, store) {
 	return (
 		action$
 			.ofType(FETCH_PAYMENTS)
-			.switchMap(function ({fromDate, toDate}) {
+			.switchMap(function ({fromDate, toDate, status}) {
 				try {
+
+          const filterJsonString = encodeURIComponent(
+            JSON.stringify({
+              fromDate,
+              toDate,
+              status
+            })
+          );
+
 
           return (
               Observable
                   .ajax({
-                      url: `${appConfig.apiPath}/UserTransactions/paymentReport?fromDate=${fromDate}&toDate=${toDate}`,
+                      // url: `${appConfig.apiPath}/UserTransactions/paymentReport?fromDate=${fromDate}&toDate=${toDate}`,
+                      url: `${appConfig.apiPath}/UserTransactions/paymentReport?filter=${filterJsonString}`,
                       responseType: "json",
                       headers: {
                         "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
@@ -73,9 +84,10 @@ function searchOnParametersChange(action$, store) {
     Observable
       .merge(
         action$.ofType(SET_FILTER_FROM_DATE),
-        action$.ofType(SET_FILTER_TO_DATE)
+        action$.ofType(SET_FILTER_TO_DATE),
+        action$.ofType(SET_FILTER_STATUS)
       )
-      .debounceTime(500)
+      .debounceTime(700)
       .map(createSearchAction(store))
   );
 
@@ -84,13 +96,14 @@ function searchOnParametersChange(action$, store) {
 function createSearchAction(store) {
 
   return function () {
-    const {fromDate, toDate} = (
+    const {fromDate, toDate, status} = (
       store.getState().payment.report.parameters
     );
 
     return fetchPayments({
       fromDate,
-      toDate
+      toDate,
+      status
     });
   }
 

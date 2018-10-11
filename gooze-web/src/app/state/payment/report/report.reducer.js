@@ -6,13 +6,15 @@ const {
   FETCH_PAYMENTS_SUCCESS,
   FETCH_PAYMENTS_FAILURE,
   SET_FILTER_FROM_DATE,
-  SET_FILTER_TO_DATE
+  SET_FILTER_TO_DATE,
+  SET_FILTER_STATUS
 } = ACTION_TYPES;
 
 const defaultState = {
   parameters: {
-    fromDate: undefined,
-    toDate: undefined
+    fromDate: "",
+    toDate: "",
+    status: ""
   },
 	results: {
 		payments: [],
@@ -76,6 +78,19 @@ function report(state = defaultState, action = {}) {
         parameters: {
           ...parameters,
           toDate
+        }
+      };
+    }
+
+    case SET_FILTER_STATUS: {
+      const {status} = action;
+      const {parameters} = state;
+
+      return {
+        ...state,
+        parameters: {
+          ...parameters,
+          status
         }
       };
     }
