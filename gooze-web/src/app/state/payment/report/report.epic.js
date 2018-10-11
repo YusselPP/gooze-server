@@ -31,11 +31,24 @@ function performPaymentsFetch(action$, store) {
 			.ofType(FETCH_PAYMENTS)
 			.switchMap(function ({fromDate, toDate, status}) {
 				try {
+          let fromParameter, toParameter;
+          const from = new Date(fromDate);
+          const to = new Date(toDate);
+
+          if (!isNaN(from.getTime())) {
+            from.setHours(0);
+            fromParameter = from.toISOString();
+          }
+
+          if (!isNaN(to.getTime())) {
+            to.setHours(0);
+            toParameter = to.toISOString();
+          }
 
           const filterJsonString = encodeURIComponent(
             JSON.stringify({
-              fromDate,
-              toDate,
+              fromDate: fromParameter,
+              toDate: toParameter,
               status
             })
           );
@@ -44,7 +57,6 @@ function performPaymentsFetch(action$, store) {
           return (
               Observable
                   .ajax({
-                      // url: `${appConfig.apiPath}/UserTransactions/paymentReport?fromDate=${fromDate}&toDate=${toDate}`,
                       url: `${appConfig.apiPath}/UserTransactions/paymentReport?filter=${filterJsonString}`,
                       responseType: "json",
                       headers: {
