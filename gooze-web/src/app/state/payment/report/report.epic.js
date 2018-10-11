@@ -9,6 +9,8 @@ import {errorMessage} from "utils";
 import {toastError} from "../../../ui/utils/ToastAlerts.service";
 import {assert} from "../../../../utils";
 
+import moment from "moment-timezone";
+
 const log = createLogger("state/payment/report/report.epic");
 
 const {
@@ -32,17 +34,15 @@ function performPaymentsFetch(action$, store) {
 			.switchMap(function ({fromDate, toDate, status}) {
 				try {
           let fromParameter, toParameter;
-          const from = new Date(fromDate);
-          const to = new Date(toDate);
+          const from = moment(fromDate);
+          const to = moment(toDate);
 
-          if (!isNaN(from.getTime())) {
-            from.setHours(0);
-            fromParameter = from.toISOString();
+          if (fromDate && from.isValid()) {
+            fromParameter = from.utc().format();
           }
 
-          if (!isNaN(to.getTime())) {
-            to.setHours(0);
-            toParameter = to.toISOString();
+          if (toDate && to.isValid()) {
+            toParameter = to.utc().format();
           }
 
           const filterJsonString = encodeURIComponent(
