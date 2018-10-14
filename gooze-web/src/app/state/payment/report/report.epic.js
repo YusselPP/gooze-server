@@ -81,9 +81,9 @@ function performPaymentsFetch(action$, store) {
           );
 
 				} catch (error) {
-                    return Observable.of(
-                        fetchPaymentsFailure({error})
-                    );
+            return Observable.of(
+                fetchPaymentsFailure({error})
+            );
 				}
 
 			})

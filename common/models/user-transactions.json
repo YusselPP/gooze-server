@@ -12,7 +12,7 @@
   },
   "properties": {
     "amount": {
-      "type": "number",
+      "type": "string",
       "required": true
     },
     "status": {

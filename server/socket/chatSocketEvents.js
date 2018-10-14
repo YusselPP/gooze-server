@@ -145,7 +145,7 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
     text = message.text;
     senderId = message.senderId;
 
-    if (chatJson.user1Id === senderId) {
+    if (chatJson.user1Id + '' === senderId + '') {
       recipientId = chatJson.user2Id;
     } else {
       recipientId = chatJson.user1Id;

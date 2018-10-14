@@ -19,7 +19,7 @@
       "default": "sent"
     },
     "amount": {
-      "type": "number"
+      "type": "string"
     },
     "location": {
       "type": "GeoPoint"

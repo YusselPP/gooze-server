@@ -141,24 +141,60 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           ])
         );
       })
-      .then(function(promisesResult) {
-        var sender = promisesResult[0];
+      .then(function([sender, recipient]) {
+        debug('dateRequestSent - creating chat');
+        let findChatPromise;
 
+        if (oneChatPerRequest) {
+          findChatPromise = Promise.resolve(null);
+        } else {
+          findChatPromise = Chat.findOne(
+            {
+              where: {
+                or: [
+                  {
+                    user1Id: senderId,
+                    user2Id: recipientId
+                  },
+                  {
+                    user1Id: recipientId,
+                    user2Id: senderId
+                  }
+                ]
+              }
+            }
+          );
+        }
+
+        return (
+          findChatPromise
+            .then(function(foundChat) {
+              if (foundChat) {
+                debug('acceptRequest - chat found');
+                return foundChat;
+              }
+              debug('acceptRequest - chat not found, creating it');
+
+              return Chat.create({
+                user1Id: senderId,
+                user2Id: recipientId
+              });
+            })
+            .then((chat) => [sender, recipient, chat])
+        );
+      })
+      .then(function([sender, recipient, chat]) {
         return DateRequest.create({
+          chatId: chat.id,
           senderId: senderId,
           recipientId: recipientId,
           status: DateRequest.constants.status.sent,
           location: sender.dateLocation
         }).then(function(dateRequest) {
-          promisesResult.push(dateRequest);
-
-          return promisesResult;
+          return [sender, recipient, dateRequest];
         });
       })
-      .then(function(promisesResult) {
-        var sender = promisesResult[0];
-        var recipient = promisesResult[1];
-        var dateRequest = promisesResult[2];
+      .then(function([sender, recipient, dateRequest]) {
         var recipientSockets;
 
         var isDateRequestReceived = false;
@@ -258,7 +294,6 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         );
       })
       .then(function([dateRequest, recipient]) {
-        let findChatPromise;
         const userJson = recipient.toJSON();
 
         debug('dateRequestSent - payment: ', userJson.payment);
@@ -287,59 +322,14 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         }
         debug('acceptRequest - accepting date request: ' + JSON.stringify(dateRequest.toJSON()));
 
-        debug('acceptRequest - creating chat');
-
-        if (oneChatPerRequest) {
-          findChatPromise = Promise.resolve(null);
-        } else {
-          findChatPromise = Chat.findOne(
-            {
-              where: {
-                or: [
-                  {
-                    user1Id: dateRequest.senderId,
-                    user2Id: dateRequest.recipientId
-                  },
-                  {
-                    user1Id: dateRequest.recipientId,
-                    user2Id: dateRequest.senderId
-                  }
-                ]
-              }
-            }
-          );
-        }
-
-        return (
-          findChatPromise
-            .then(function(foundChat) {
-              if (foundChat) {
-                debug('acceptRequest - chat found');
-                return foundChat;
-              }
-              debug('acceptRequest - chat not found, creating it');
-
-              return Chat.create({
-                user1Id: dateRequest.senderId,
-                user2Id: dateRequest.recipientId
-              });
-            })
-            .then(function(createdChat) {
-              chat = createdChat;
-              debug('acceptRequest - assigned chat: id=' + createdChat.id);
-              debug('acceptRequest - updating request status and chat: id=' + dateRequest.id);
-              return dateRequest.updateAttributes({
-                chatId: createdChat.id,
-                status: DateRequest.constants.status.accepted
-              });
-            })
-        );
+        return dateRequest.updateAttributes({
+          status: DateRequest.constants.status.accepted
+        });
       })
       .then(function(dateRequest) {
         var senderSockets, senderId;
         var dateRequestJson = dateRequest.toJSON();
 
-        dateRequestJson.chat = chat.toJSON();
         senderId = dateRequestJson.sender && dateRequestJson.sender.id;
 
         debug('date request status updated: ' + JSON.stringify(dateRequestJson));

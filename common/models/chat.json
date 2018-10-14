@@ -17,14 +17,6 @@
       "type": "string",
       "required": true,
       "default": "active"
-    },
-    "user1Id": {
-      "type": "object",
-      "required": true
-    },
-    "user2Id": {
-      "type": "object",
-      "required": true
     }
   },
   "relations": {
@@ -37,6 +29,48 @@
       "type": "hasMany",
       "model": "ChatMessage",
       "foreignKey": "chatId"
+    },
+    "user1": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "user1Id",
+      "options": {
+        "scope": {
+          "fields": [
+            "id",
+            "username",
+            "email",
+            "searchPic",
+            "profilePic",
+            "imagesRating",
+            "complianceRating",
+            "dateQualityRating",
+            "dateRating",
+            "goozeRating"
+          ]
+        }
+      }
+    },
+    "user2": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "user2Id",
+      "options": {
+        "scope": {
+          "fields": [
+            "id",
+            "username",
+            "email",
+            "searchPic",
+            "profilePic",
+            "imagesRating",
+            "complianceRating",
+            "dateQualityRating",
+            "dateRating",
+            "goozeRating"
+          ]
+        }
+      }
     }
   },
   "acls": [

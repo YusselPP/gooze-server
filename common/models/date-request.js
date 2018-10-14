@@ -692,12 +692,27 @@ module.exports = function(DateRequest) {
         return createDatePromise;
       })
       .then(function(response) {
-        // TODO: send sendMessage('the user is not available anymore')
         return (
           DateRequest.find({
             where: {
-              recipientId: data.toUserId,
-              status: DateRequest.constants.status.accepted
+              or: [
+                {
+                  recipientId: data.toUserId,
+                  status: DateRequest.constants.status.accepted
+                },
+                {
+                  senderId: data.fromUserId,
+                  status: DateRequest.constants.status.accepted
+                },
+                {
+                  senderId: data.fromUserId,
+                  status: DateRequest.constants.status.sent
+                },
+                {
+                  senderId: data.fromUserId,
+                  status: DateRequest.constants.status.received
+                }
+              ]
             }
           })
             .then(function(dateRequests) {
@@ -729,7 +744,7 @@ module.exports = function(DateRequest) {
               );
             })
             .then(function(updatedRequests) {
-              debug(funcName, '- updatedRequests:', updatedRequests);
+              // debug(funcName, '- updatedRequests:', updatedRequests);
 
               var datesService = DateRequest.app.datesSocketChannel.customService;
 
@@ -746,14 +761,36 @@ module.exports = function(DateRequest) {
               if (chatService) {
                 updatedRequests.forEach(function(updatedRequest) {
                   const updatedRequestJson = updatedRequest.toJSON();
-                  const username = updatedRequestJson.recipient.username;
                   const chatJson = updatedRequestJson.chat;
-                  const mode = 'client';
+                  let mode = 'client';
+                  let sender;
+
+                  if (!chatJson) {
+                    return;
+                  }
+
+                  debug(funcName, '- updatedRequestJson.senderId === data.fromUserId =',  updatedRequestJson.senderId === data.fromUserId);
+                  debug(funcName, '- updatedRequestJson.senderId === data.fromUserId + "" =',  updatedRequestJson.senderId + '' === data.fromUserId);
+                  if (updatedRequestJson.senderId + '' === data.fromUserId) {
+                    sender = updatedRequestJson.sender;
+                    mode = 'gooze';
+                  } else {
+                    sender = updatedRequestJson.recipient;
+                    mode = 'client';
+                  }
+
+                  debug(
+                    funcName, '-',
+                    'sender:', sender,
+                    'updatedRequestJ.id', updatedRequestJson.id,
+                    'updatedRequestJson.senderId', updatedRequestJson.senderId,
+                    'updatedRequestJson.recipientId', updatedRequestJson.recipientId
+                  );
 
                   const message = {
                     chatId: chatJson.id,
-                    text: 'service.dates.becameUnavailable|' + username,
-                    senderId: updatedRequestJson.recipientId,
+                    text: 'service.dates.becameUnavailable|' + sender.username,
+                    senderId: sender.id,
                     type: 'info',
                     status: 'sent',
                     createdAt: new Date(),
@@ -762,7 +799,7 @@ module.exports = function(DateRequest) {
 
                   debug(funcName, '-', chatJson);
 
-                  chatService.sendMessage([message, username, chatJson, updatedRequest, mode], function(err) {
+                  chatService.sendMessage([message, sender.username, chatJson, updatedRequest, mode], function(err) {
                     if (err) {
                       console.error(funcName + ' - Failed to send createChargeSuccess message', err);
                       return;
