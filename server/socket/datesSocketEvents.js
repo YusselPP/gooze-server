@@ -569,7 +569,10 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
               'loc-key': 'vm.map.date.arriving',
               'loc-args': [user.username]
             },
-            badge: 1
+            badge: 1,
+            payload: {
+              showInApp: true
+            }
           });
           debug(funcName + ' - push notification sent');
         }
