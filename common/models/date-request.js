@@ -1,6 +1,5 @@
-'use strict';
-
 var debug = require('debug')('gooze:date-request');
+var apns = require('../../common/services/apns/apns-service');
 
 /**
  *
@@ -318,6 +317,20 @@ module.exports = function(DateRequest) {
             notifiedUser = sender;
           }
 
+          var requestJson = dateRequest.toJSON();
+          if (requestJson.date.status === GZEDate.constants.status.starting) {
+            apns.send(DateRequest.app.apnsProvider, notifiedUserId, {
+              alert: {
+                'loc-key': 'vm.map.date.arrived',
+                'loc-args': [updatedUser.username]
+              },
+              badge: 1,
+              payload: {
+                showInApp: true
+              }
+            });
+          }
+
           if (datesService) {
             datesService.emitDateStatusChanged(notifiedUserId, dateRequest, notifiedUser);
           } else {
@@ -452,6 +465,20 @@ module.exports = function(DateRequest) {
           } else if (ender === 'recipientEnded') {
             updatedUser = recipient;
             notifiedUser = sender;
+          }
+
+          var requestJson = updatedRequest.toJSON();
+          if (requestJson.date.status === GZEDate.constants.status.ending) {
+            apns.send(DateRequest.app.apnsProvider, notifiedUserId, {
+              alert: {
+                'loc-key': 'vm.map.date.waitingForYouToEnd',
+                'loc-args': [updatedUser.username]
+              },
+              badge: 1,
+              payload: {
+                showInApp: true
+              }
+            });
           }
 
           if (datesService) {
