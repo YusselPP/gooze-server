@@ -31,6 +31,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
   var DateRequest = app.models.DateRequest;
   var GoozeUser = app.models.GoozeUser;
   var GZEDate = app.models.GZEDate;
+  var Payment = app.models.Payment;
 
   channel.customService = {
     updateLocation: updateLocation,
@@ -111,6 +112,21 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           throw error;
         }
 
+        return (
+          Payment
+            .findPaymentMethods(userJson.payment.paypalCustomerId)
+            .then(function(paymentMethods) {
+              if (!Array.isArray(paymentMethods) || paymentMethods.length === 0) {
+                error = new Error('A payment method is required');
+                error.statusCode = error.status = 422;
+                error.code = 'PAYMENT_METHOD_REQUIRED';
+                error.details = {};
+                throw error;
+              }
+            })
+        );
+      })
+      .then(function() {
         return DateRequest.find({
           where: {
             senderId: senderId,
@@ -322,6 +338,23 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         }
         debug('acceptRequest - accepting date request: ' + JSON.stringify(dateRequest.toJSON()));
 
+        return (
+          Payment
+            .findPaymentMethods(userJson.payment.paypalCustomerId)
+            .then(function(paymentMethods) {
+              if (!Array.isArray(paymentMethods) || paymentMethods.length === 0) {
+                error = new Error('A payment method is required');
+                error.statusCode = error.status = 422;
+                error.code = 'PAYMENT_METHOD_REQUIRED';
+                error.details = {};
+                throw error;
+              }
+
+              return dateRequest;
+            })
+        );
+      })
+      .then(function(dateRequest) {
         return dateRequest.updateAttributes({
           status: DateRequest.constants.status.accepted
         });
