@@ -102,6 +102,10 @@
     "dataSource": "mongoDs",
     "public": true
   },
+  "GZERegisterCode": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
   "UserComments": {
     "dataSource": "mongoDs",
     "public": false

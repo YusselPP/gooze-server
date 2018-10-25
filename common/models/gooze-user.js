@@ -56,7 +56,7 @@ module.exports = function(GoozeUser) {
     count: 'number'
   };
 
-  Object.keys(GoozeUser.constants.ratings).forEach(function (key) {
+  Object.keys(GoozeUser.constants.ratings).forEach(function(key) {
     GoozeUser.defineProperty(key, {type: Rating});
   });
 
@@ -78,6 +78,172 @@ module.exports = function(GoozeUser) {
 
     return rates.reduce(function(prev, rate) { return prev + rate; }, 0) / rates.length;
   }
+
+  GoozeUser.isValidRegisterCode = function(code, cb) {
+    let error;
+    const funcName = 'isValidRegisterCode';
+    const GZERegisterCode = GoozeUser.app.models.GZERegisterCode;
+
+    debug(funcName, '- code:', code);
+
+    const where = {
+      code
+    };
+
+    const promise = (
+      GZERegisterCode.findOne({
+        where
+      }).then(function(registerCode) {
+        debug(funcName, ' - found registerCode: ', registerCode);
+
+        const result = {isValid: false};
+
+        if (!registerCode) {
+          return result;
+        }
+
+        if (registerCode.count < 1) {
+          debug(funcName, '- Code uses exceeded');
+          error = new Error('vm.signUp.registerCodeUsesExceeded');
+          error.statusCode = error.status = 422;
+          error.code = 'CODE_USES_EXCEEDED';
+
+          throw error;
+        }
+
+        result.isValid = true;
+
+        return result;
+      })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise.then(function(isValid) {
+      debug(funcName, ' - isValid:', isValid);
+      cb(null, isValid);
+    }).catch(function(err) {
+      cb(err);
+    });
+  };
+
+  GoozeUser.remoteMethod('isValidRegisterCode', {
+    http: {verb: 'get', path: '/isValidRegisterCode/:code'},
+    accepts: [
+      {arg: 'code', type: 'string', required: true}
+    ],
+    returns: {root: true, type: 'object'}
+  });
+
+  GoozeUser.signUp = function(user, configName, cb) {
+    let error;
+    const funcName = 'signUp';
+    const AppConfig = GoozeUser.app.models.AppConfig;
+
+    debug(funcName, '- user:', user, 'config:', configName);
+
+    const promise = (
+      AppConfig.findByName(configName)
+        .then(function(appConfig) {
+          return !!(appConfig && appConfig.config && appConfig.config.isRegisterCodeRequired);
+        })
+        .then(function(isRegisterCodeRequired) {
+          if (!isRegisterCodeRequired) {
+            return true;
+          }
+
+          return (
+            GoozeUser.isValidRegisterCode(user.registerCode)
+              .then((result) => result.isValid)
+          );
+        })
+        .then(function(isValidRegisterCode) {
+          if (!isValidRegisterCode) {
+            debug(funcName, '- Invalid register code');
+            error = new Error('vm.signUp.invalidRegisterCode');
+            error.statusCode = error.status = 422;
+            error.code = 'INVALID_REGISTER_CODE';
+
+            throw error;
+          }
+
+          return GoozeUser.count({username: user.username});
+        })
+        .then(function(result) {
+          debug(funcName, '- count:', result);
+          if (result > 0) {
+            debug(funcName, '- Username already exists');
+            error = new Error('validation.exists');
+            error.statusCode = error.status = 422;
+            error.code = 'ALREADY_EXISTS';
+            error.args = 'user.username.fieldName';
+
+            throw error;
+          }
+
+          return GoozeUser.count({email: user.email});
+        })
+        .then(function(result) {
+          debug(funcName, '- count:', result);
+          if (result > 0) {
+            debug(funcName, '- Email already exists');
+            error = new Error('validation.exists');
+            error.statusCode = error.status = 422;
+            error.code = 'ALREADY_EXISTS';
+            error.args = 'user.email.fieldName';
+
+            throw error;
+          }
+
+          return GoozeUser.create(user);
+        })
+        .then(function() {
+          return (
+            new Promise((resolve, reject) => {
+              GoozeUser.login({email: user.email, password: user.password}, true, function(err, accessToken) {
+                if (err) {
+                  reject(err);
+                  return;
+                }
+
+                resolve(accessToken);
+              });
+            })
+          );
+        })
+        .then(function(accessToken) {
+          // Discount register code
+          const GZERegisterCode = GoozeUser.app.models.GZERegisterCode;
+
+          return (
+            GZERegisterCode
+              .updateAll({code: user.registerCode}, {$inc: {count: -1}})
+              .then(() => accessToken)
+          );
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise.then(function(response) {
+      cb(null, response);
+    }).catch(function(err) {
+      cb(err);
+    });
+  };
+
+  GoozeUser.remoteMethod('signUp', {
+    http: {verb: 'post'},
+    accepts: [
+      {arg: 'user', type: 'object', required: true},
+      {arg: 'configName', type: 'string', required: true}
+    ],
+    returns: {root: true, type: 'object'}
+  });
 
   GoozeUser.updateById = function(id, data, cb) {
     var error, promise;
@@ -544,7 +710,6 @@ module.exports = function(GoozeUser) {
           debug('unreadMessagesCount - counts', counts);
           return (
             chatIds.reduce(function(result, chatId, index) {
-
               result[chatId] = counts[index];
 
               return result;

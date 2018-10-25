@@ -24,6 +24,7 @@ module.exports = function(AppConfig) {
   };
 
   AppConfig.remoteMethod('findByName', {
+    http: {verb: 'get', path: '/findByName/:name'},
     accepts: [
       {arg: 'name', type: 'string', required: true}
     ],
