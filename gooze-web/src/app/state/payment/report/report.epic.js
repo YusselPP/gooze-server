@@ -64,7 +64,56 @@ function performPaymentsFetch(action$, store) {
                         "Content-Type": "application/json"
                       }
                   })
-                  .map(({response}) => fetchPaymentsSuccess({payments: response}))
+                  .map(({response}) => (
+                      response.map(function (payment) {
+                          const clientTax = 0.06;
+                          const goozeTax = 0.06;
+                          const {
+                            id,
+                            goozeStatus,
+                            createdAt,
+                            amount,
+                            toUser,
+                            toUserPayment
+                          } = payment;
+
+                          const grossAmount = (+amount) || 0;
+                          const netAmount = grossAmount / (1 + clientTax) * (1 - goozeTax);
+
+                          return {
+                              id,
+                              createdAt,
+                              goozeStatus,
+                              username: toUser && toUser.username,
+                              paypalEmail: toUserPayment && toUserPayment.paypalEmail,
+                              grossAmount,
+                              netAmount
+                          }
+                      })
+                  ))
+                  .map((payments) => (
+                    payments.reduce(function (result, payment) {
+                      const userPayments = result[payment.username];
+
+                      if (userPayments === undefined) {
+
+                        result[payment.username] = {
+                          payments: [payment],
+                          grossAmount: payment.grossAmount,
+                          netAmount: payment.netAmount
+                        };
+
+                      } else {
+
+                        userPayments.payments.push(payment);
+                        userPayments.grossAmount += payment.grossAmount;
+                        userPayments.netAmount += payment.netAmount;
+                      }
+
+                      return result;
+                    }, {})
+                  ))
+                  .map((payments) => fetchPaymentsSuccess({payments}))
                   .catch(function (err) {
 
                       const {response} = err;

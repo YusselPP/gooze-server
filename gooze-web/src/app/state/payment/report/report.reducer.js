@@ -17,7 +17,7 @@ const defaultState = {
     status: ""
   },
 	results: {
-		payments: [],
+		payments: {},
 		error: undefined
 	}
 };
@@ -50,7 +50,7 @@ function report(state = defaultState, action = {}) {
 			return {
 				...state,
         results: {
-					payments: [],
+					payments: {},
           error
         }
 			};

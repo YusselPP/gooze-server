@@ -166,7 +166,7 @@ module.exports = function(UserTransaction) {
                 .then(function(customers) {
                   return customers
                     .forEach(function(customer) {
-                      if (customer && customer.paypalAccounts[0]) {
+                      if (customer && customer.paypalAccounts && customer.paypalAccounts[0]) {
                         transactions.forEach((trans, index) => {
                           if (trans.toUserPaypalCustomerId === customer.id) {
                             transactions[index].toUserPayment.paypalEmail = customer.paypalAccounts[0].email;

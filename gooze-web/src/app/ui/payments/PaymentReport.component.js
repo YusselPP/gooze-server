@@ -39,40 +39,73 @@ function PaymentReport() {
   const parameterFromDate$ = paymentParameters$.pluck("fromDate");
   const parameterToDate$ = paymentParameters$.pluck("toDate");
   const paymentResults$ = state$.pluck("payment", "report", "results").distinctUntilChanged();
-  const payments$ = paymentResults$.pluck("payments");
+  const payments$ = (
+    paymentResults$.pluck("payments")
+      .map((groupedPayments) => (
+        Object.keys(groupedPayments)
+          .map((key) => (
+            groupedPayments[key]
+          ))
+        )
+      )
+  );
 
   const filteredPayments$ = (
       payments$
-          .map((payments) => (
-              payments.map((payment, i) => (
-                  <tr key={i}>
-                      {/*<td>{payment.id}</td>*/}
-                      <td title={payment.id}>{payment.toUser && payment.toUser.username}</td>
-                      <td>{payment.toUserPayment && payment.toUserPayment.paypalEmail}</td>
-                      <td>{moment(payment.createdAt).format("YYYY-MM-DD hh:mm:ss")}</td>
-                      <td>{displayStatus(payment.goozeStatus)}</td>
-                      <td>${payment.amount}</td>
-                      <td>${ Math.round(payment.amount / 1.06 * 0.94 * 100) / 100 }</td>
-                  </tr>
-              ))
-          ))
+          .map((groupedPayments) => (
+              groupedPayments.reduce((result, paymentGroup, i) => {
+                  const {payments, grossAmount, netAmount} = paymentGroup;
+
+                  result = [...result, ...(payments.map((payment) => (
+                      <tr key={payment.id}>
+                          <td title={payment.id}>{payment.username}</td>
+                          <td>{payment.paypalEmail}</td>
+                          <td>{moment(payment.createdAt).format("YYYY-MM-DD hh:mm:ss")}</td>
+                          <td>{displayStatus(payment.goozeStatus)}</td>
+                          <td>${payment.grossAmount.toFixed(2)}</td>
+                          <td>${payment.netAmount.toFixed(2)}</td>
+                          <td>
+                            <div className="input-group">
+                              <input type="text" className="form-control" defaultValue={payment.netAmount.toFixed(2)}/>
+                              <div className="input-group-append">
+                                <button className="btn btn-outline-secondary">Pagar</button>
+                              </div>
+                            </div>
+                          </td>
+                      </tr>
+                  )))];
+
+                  result.push(
+                      <tr key={i}>
+                          <td colSpan="4" className="text-right"><b>Subtotal:</b></td>
+                          <td><b>${grossAmount.toFixed(2)}</b></td>
+                          <td><b>${netAmount.toFixed(2)}</b></td>
+                          <td>&nbsp;</td>
+                      </tr>
+                  );
+
+                  return result;
+              }, [])
+      ))
   );
 
   const totalAmount$ = (
     payments$
+      .map((groupedPayments) => (
+        groupedPayments.reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
+      ))
       .map((payments) => (
-        "$" + payments.reduce((prev, payment) => prev + payment.amount, 0)
+        "$" + payments.reduce((prev, payment) => prev + payment.grossAmount, 0).toFixed(2)
       ))
   );
 
   const totalToPay$ = (
     payments$
+      .map((groupedPayments) => (
+        groupedPayments.reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
+      ))
       .map((payments) => (
-        "$" +  Math.round(
-          payments
-          .reduce((prev, payment) => prev + Math.round(payment.amount / 1.06 * 0.94 * 100) / 100, 0)
-          * 100
-        ) / 100
+        "$" + payments.reduce((prev, payment) => prev + payment.netAmount, 0).toFixed(2)
       ))
   );
 
@@ -140,6 +173,7 @@ function PaymentReport() {
                       <th scope="col">Status</th>
                       <th scope="col">Cantidad recibida</th>
                       <th scope="col">Cantidad a pagar</th>
+                      <th>&nbsp;</th>
                   </tr>
                   </thead>
                   <rxDom.tbody>{
