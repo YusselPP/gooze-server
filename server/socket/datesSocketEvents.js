@@ -100,6 +100,16 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           };
           throw error;
         }
+
+        return user;
+      })
+      .then(function(user) {
+        return (
+          GoozeUser.hasCompleteProfile(user.id)
+            .then(() => user)
+        );
+      })
+      .then(function(user) {
         const userJson = user.toJSON();
 
         debug('dateRequestSent - payment: ', userJson.payment);

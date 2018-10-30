@@ -79,6 +79,78 @@ module.exports = function(GoozeUser) {
     return rates.reduce(function(prev, rate) { return prev + rate; }, 0) / rates.length;
   }
 
+  GoozeUser.hasCompleteProfile = function(id, cb) {
+    let error;
+    const funcName = 'hasCompleteProfile -';
+
+    debug(funcName, 'id:', id);
+
+    const promise = (
+      GoozeUser.findById(id)
+        .then(function(user) {
+          if (!user) {
+            debug(funcName, 'User not found');
+            error = new Error('User with id[=' + id + '] not found');
+            error.statusCode = error.status = 404;
+            error.code = 'MODEL_NOT_FOUND';
+            throw error;
+          }
+
+          const properties = [
+            'birthday',
+            'gender',
+            'weight',
+            'height',
+            'languages',
+            'interestedIn',
+            'profilePic',
+            'searchPic',
+            'photos',
+            'origin'
+          ];
+
+          const missingProperties = properties.reduce(function(result, prop) {
+            const value = user[prop];
+
+            if (!value || Array.isArray(value) && value.length === 0) {
+              result.push(prop);
+            }
+
+            return result;
+          }, []);
+
+          if (missingProperties.length > 0) {
+            debug(funcName, 'Missing properties:', missingProperties);
+            error = new Error('validation.profile.incomplete');
+            error.statusCode = error.status = 422;
+            error.code = 'USER_INCOMPLETE_PROFILE';
+            throw error;
+          }
+
+          return true;
+        })
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise.then(function(hasCompleteProfile) {
+      debug(funcName, 'hasCompleteProfile:', hasCompleteProfile);
+      cb(null, hasCompleteProfile);
+    }).catch(function(err) {
+      cb(err);
+    });
+  };
+
+  GoozeUser.remoteMethod('hasCompleteProfile', {
+    http: {verb: 'get', path: '/hasCompleteProfile/:id'},
+    accepts: [
+      {arg: 'id', type: 'string', required: true}
+    ],
+    returns: {type: 'boolean'}
+  });
+
   GoozeUser.isValidRegisterCode = function(code, cb) {
     let error;
     const funcName = 'isValidRegisterCode';
