@@ -317,6 +317,47 @@ module.exports = function(GoozeUser) {
     returns: {root: true, type: 'object'}
   });
 
+  GoozeUser.activate = function(params, cb) {
+    const funcName = 'activate -';
+
+    debug(funcName, 'params:', params);
+
+    const {
+      id,
+      currentLocation,
+      activeUntil
+    } = params;
+
+    const promise = (
+      GoozeUser.hasCompleteProfile(id)
+        .then(() => (
+          GoozeUser.updateById(id, {
+            currentLocation,
+            currentLoc: [currentLocation.lng, currentLocation.lat],
+            activeUntil
+          })
+        ))
+    );
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise.then(function(response) {
+      cb(null, response);
+    }).catch(function(err) {
+      cb(err);
+    });
+  };
+
+  GoozeUser.remoteMethod('activate', {
+    http: {verb: 'post'},
+    accepts: [
+      {arg: 'params', type: 'object', required: true}
+    ],
+    returns: {root: true, type: 'object'}
+  });
+
   GoozeUser.updateById = function(id, data, cb) {
     var error, promise;
 
