@@ -13,7 +13,23 @@
   "properties": {
     "amount": {
       "type": "string",
-      "required": true
+      "required": true,
+      "default": "0"
+    },
+    "netAmount": {
+      "type": "string",
+      "required": true,
+      "default": "0"
+    },
+    "clientTaxAmount": {
+      "type": "string",
+      "required": true,
+      "default": "0"
+    },
+    "goozeTaxAmount": {
+      "type": "string",
+      "required": true,
+      "default": "0"
     },
     "status": {
       "type": "string",
@@ -27,6 +43,21 @@
       "type": "string",
       "required": true,
       "default": "pending"
+    },
+    "currencyIsoCode": {
+      "type": "string"
+    },
+    "gatewayTransactionId": {
+      "type": "string"
+    },
+    "processorResponseCode": {
+      "type": "string"
+    },
+    "processorResponseText": {
+      "type": "string"
+    },
+    "paypalAccount": {
+      "type": "object"
     }
   },
   "validations": [],

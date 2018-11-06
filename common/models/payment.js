@@ -247,8 +247,22 @@ module.exports = function(Payment) {
                 toUserId: sale.toUserId,
                 dateRequestId: sale.dateRequestId,
                 amount: transaction.amount,
+                clientTaxAmount: sale.clientTaxAmount,
+                goozeTaxAmount: sale.goozeTaxAmount,
+                netAmount: sale.netAmount,
                 status: transaction.status,
-                paymentMethod: 'paypal'
+                paymentMethod: 'paypal',
+                gatewayTransactionId: transaction.id,
+
+                processorResponseCode: transaction.processorResponseCode,
+                processorResponseText: transaction.processorResponseText,
+
+                currencyIsoCode: transaction.currencyIsoCode,
+                /*
+                  transactionFeeAmount
+                  transactionFeeCurrencyIsoCode
+                 */
+                paypalAccount: transaction.paypalAccount
               };
 
               promise = (
