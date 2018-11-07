@@ -30,7 +30,7 @@ const {
   SET_FILTER_STATUS,
   PAY,
   PAY_SUCCESS,
-  SET_PAYMENT_PENDING
+  SET_PAYMENT_PENDING_SUCCESS
 
 } = ACTION_TYPES;
 
@@ -315,7 +315,7 @@ function setPaymentPending(action$, store) {
 
 function fetchPaymentsOnPaySuccess(action$, store) {
   return (
-    action$.ofType(PAY_SUCCESS, SET_PAYMENT_PENDING)
+    action$.ofType(PAY_SUCCESS, SET_PAYMENT_PENDING_SUCCESS)
       .map(createSearchAction(store))
   );
 }
