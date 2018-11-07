@@ -212,6 +212,123 @@ module.exports = function(UserTransaction) {
     ],
     returns: {type: [], root: true}
   });
+
+  UserTransaction.updateMany = function(transactions, cb) {
+    debug('updateMany - transactions:', transactions);
+
+    cb = typeof cb === 'function' ? cb : undefined;
+
+    let promise;
+
+    if (!Array.isArray(transactions) || transactions.length === 0) {
+      promise = Promise.resolve();
+    } else {
+      promise = (
+        UserTransaction.find({
+          where: {
+            id: {
+              inq: transactions.map((transaction) => transaction.id)
+            }
+          }
+        })
+          .then(function(foundTransactions) {
+            return (
+              Promise.all(
+                foundTransactions
+                  .map((foundTransaction) => {
+                    const transaction = transactions.find((transaction) => transaction.id === (foundTransaction.id + ''));
+
+                    debug('transaction:', transaction);
+                    debug('transaction found:', foundTransaction);
+
+                    delete transaction.id;
+
+                    return foundTransaction.updateAttributes(transaction);
+                  })
+              )
+            );
+          })
+      );
+    }
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function() {
+        cb(null);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
+  };
+
+  UserTransaction.remoteMethod('updateMany', {
+    http: {verb: 'post'},
+    accepts: [
+      {arg: 'transactions', type: 'array'}
+    ]
+  });
+
+  UserTransaction.pay = function(payments, cb) {
+    debug('pay - filter:', payments);
+
+    cb = typeof cb === 'function' ? cb : undefined;
+
+    let promise;
+
+    if (!Array.isArray(payments) || payments.length === 0) {
+      promise = Promise.resolve();
+    } else {
+      promise = (
+        UserTransaction.find({
+          where: {
+            id: {
+              inq: payments.map((payment) => payment.id)
+            }
+          }
+        })
+          .then(function(transactions) {
+            return (
+              Promise.all(
+                transactions
+                  .map((transaction) => {
+                    const payment = payments.find((payment) => payment.id === (transaction.id + ''));
+
+                    debug('transaction:', transaction);
+                    debug('payment found:', payment);
+
+                    return transaction.updateAttributes({
+                      goozeStatus: UserTransaction.constants.status.paid,
+                      paidAmount: payment.paidAmount
+                    });
+                  })
+              )
+            );
+          })
+      );
+    }
+
+    if (!cb) {
+      return promise;
+    }
+
+    promise
+      .then(function() {
+        cb(null);
+      })
+      .catch(function(err) {
+        cb(err);
+      });
+  };
+
+  UserTransaction.remoteMethod('pay', {
+    http: {verb: 'post'},
+    accepts: [
+      {arg: 'payments', type: 'array'}
+    ]
+  });
 };
 
 function isValidDate(d) {

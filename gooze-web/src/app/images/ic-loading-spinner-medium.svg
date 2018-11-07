@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+    <g fill="none" fill-rule="evenodd">
+        <path fill="#DEDEDE" d="M32 0C14.327 0 0 14.327 0 32c0 17.673 14.327 32 32 32 17.673 0 32-14.327 32-32C64 14.327 49.673 0 32 0m0 4c15.439 0 28 12.561 28 28S47.439 60 32 60 4 47.439 4 32 16.561 4 32 4"/>
+        <path fill="#0081CB" d="M64 32h-4C60 16.56 47.44 4 32 4V0c17.67 0 32 14.33 32 32"/>
+    </g>
+    <animateTransform
+            attributeType="xml"
+            attributeName="transform"
+            type="rotate"
+            from="0"
+            to="360"
+            dur="0.8s"
+            repeatCount="indefinite"
+    />
+</svg>

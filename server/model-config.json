@@ -141,7 +141,9 @@
         "sharedMethods": {
           "*": false,
           "find": true,
-          "paymentReport": true
+          "paymentReport": true,
+          "pay": true,
+          "updateMany": true
         }
       }
     }

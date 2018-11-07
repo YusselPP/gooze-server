@@ -2,25 +2,34 @@
 import {ACTION_TYPES} from "./report.actions";
 
 const {
-  FETCH_PAYMENTS,
   FETCH_PAYMENTS_SUCCESS,
   FETCH_PAYMENTS_FAILURE,
   SET_FILTER_FROM_DATE,
   SET_FILTER_TO_DATE,
-  SET_FILTER_STATUS
+  SET_FILTER_STATUS,
+  TOGGLE_PAYMENT_SELECTION,
+  SET_PAYMENT_AMOUNT,
+  PAY,
+  PAY_SUCCESS,
+  PAY_FAILURE,
+  SET_PAYMENT_PENDING,
+  SET_PAYMENT_PENDING_SUCCESS,
+  SET_PAYMENT_PENDING_FAILURE
 } = ACTION_TYPES;
 
-const defaultState = {
-  parameters: {
+const defaultState = Object.freeze({
+  parameters: Object.freeze({
     fromDate: "",
     toDate: "",
     status: ""
-  },
-	results: {
-		payments: {},
+  }),
+	results: Object.freeze({
+		payments: Object.freeze({}),
 		error: undefined
-	}
-};
+	}),
+  loading: false,
+  error: undefined
+});
 
 export default report;
 
@@ -37,10 +46,10 @@ function report(state = defaultState, action = {}) {
 
 			return {
 				...state,
-          results: {
-              payments,
+          results: Object.freeze({
+              payments: Object.freeze(payments),
               error
-          }
+          })
 			};
 		}
 
@@ -49,10 +58,10 @@ function report(state = defaultState, action = {}) {
 
 			return {
 				...state,
-        results: {
-					payments: {},
+        results: Object.freeze({
+					payments: Object.freeze({}),
           error
-        }
+        })
 			};
 		}
 
@@ -62,10 +71,10 @@ function report(state = defaultState, action = {}) {
 
       return {
         ...state,
-        parameters: {
+        parameters: Object.freeze({
           ...parameters,
           fromDate
-        }
+        })
       };
     }
 
@@ -75,10 +84,10 @@ function report(state = defaultState, action = {}) {
 
       return {
         ...state,
-        parameters: {
+        parameters: Object.freeze({
           ...parameters,
           toDate
-        }
+        })
       };
     }
 
@@ -88,10 +97,117 @@ function report(state = defaultState, action = {}) {
 
       return {
         ...state,
-        parameters: {
+        parameters: Object.freeze({
           ...parameters,
           status
-        }
+        })
+      };
+    }
+
+    case TOGGLE_PAYMENT_SELECTION: {
+      const {payment} = action;
+      const {results} = state;
+      const {payments} = results;
+
+      // TODO: at init separete payments array and grouped payments
+      const oldPayment = payments[payment.username];
+
+      return {
+        ...state,
+        results: Object.freeze({
+          ...results,
+          payments: Object.freeze({
+            ...payments,
+            [payment.username]: Object.freeze({
+              ...oldPayment,
+              payments: Object.freeze(oldPayment.payments.map(
+                (resultsPayment) => (
+                  resultsPayment === payment ?
+                    {...resultsPayment, isSelected: !resultsPayment.isSelected} :
+                    resultsPayment
+                )
+              ))
+            })
+          })
+        })
+      };
+    }
+
+    case SET_PAYMENT_AMOUNT: {
+
+      const {payment, paidAmount} = action;
+      const {results} = state;
+      const {payments} = results;
+      const oldPayment = payments[payment.username];
+
+      return {
+        ...state,
+        results: Object.freeze({
+          ...results,
+          payments: Object.freeze({
+            ...payments,
+            [payment.username]: Object.freeze({
+              ...oldPayment,
+              payments: Object.freeze(oldPayment.payments.map(
+                (resultsPayment) => (
+                  resultsPayment === payment ?
+                    {...resultsPayment, paidAmount} :
+                    resultsPayment
+                )
+              ))
+            })
+          })
+        })
+      };
+    }
+
+    case PAY: {
+      return {
+        ...state,
+        loading: true
+      };
+    }
+
+    case PAY_SUCCESS: {
+      return {
+        ...state,
+        loading: false
+      };
+    }
+
+    case PAY_FAILURE: {
+
+      const {error} = action;
+
+      return {
+        ...state,
+        loading: false,
+        error
+      };
+    }
+
+    case SET_PAYMENT_PENDING: {
+      return {
+        ...state,
+        loading: true
+      };
+    }
+
+    case SET_PAYMENT_PENDING_SUCCESS: {
+      return {
+        ...state,
+        loading: false
+      };
+    }
+
+    case SET_PAYMENT_PENDING_FAILURE: {
+
+      const {error} = action;
+
+      return {
+        ...state,
+        loading: false,
+        error
       };
     }
 

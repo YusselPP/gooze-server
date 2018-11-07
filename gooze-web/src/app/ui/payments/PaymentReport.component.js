@@ -3,12 +3,17 @@
  */
 import React from "react";
 import {Observable} from "rxjs/Observable";
-import PropTypes from "prop-types";
 import moment from "moment";
+import classNames from "classnames";
 
 import {rxDom} from "utils/reactiveDom";
 import {dispatch, state$} from "../../state/app.store";
 import {
+  payStatus,
+  pay,
+  setPaymentPending,
+  setPaymentAmount,
+  togglePaymentSelection,
   fetchPayments,
   setFilterStatus,
   setFilterFromDate,
@@ -18,11 +23,11 @@ import {
 const displayStatus = (status) => {
     let displayName;
     switch (status) {
-        case "pending": displayName = "Pendiente";
+        case payStatus.pending: displayName = "Pendiente";
             break;
-        case "paid": displayName = "Pagado";
+        case payStatus.paid: displayName = "Pagado";
           break;
-        case "review": displayName = "Reclamación";
+        case payStatus.review: displayName = "Reclamación";
           break;
         default:
           displayName = "";
@@ -40,7 +45,7 @@ function PaymentReport() {
   const parameterToDate$ = paymentParameters$.pluck("toDate");
   const paymentResults$ = state$.pluck("payment", "report", "results").distinctUntilChanged();
   const payments$ = (
-    paymentResults$.pluck("payments")
+    paymentResults$.pluck("payments").distinctUntilChanged()
       .map((groupedPayments) => (
         Object.keys(groupedPayments)
           .map((key) => (
@@ -66,9 +71,11 @@ function PaymentReport() {
                           <td>${payment.netAmount.toFixed(2)}</td>
                           <td>
                             <div className="input-group">
-                              <input type="text" className="form-control" defaultValue={payment.netAmount.toFixed(2)}/>
+                              <input type="number" className="form-control" value={payment.paidAmount} disabled={payment.goozeStatus === payStatus.paid} onChange={(event) => dispatch(setPaymentAmount({payment, paidAmount: event.target.value}))}/>
                               <div className="input-group-append">
-                                <button className="btn btn-outline-secondary">Pagar</button>
+                                <div className="input-group-text">
+                                  <input type="checkbox" checked={payment.isSelected} onChange={() => dispatch(togglePaymentSelection({payment}))}/>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -111,13 +118,47 @@ function PaymentReport() {
 
   const statusOptions$ = Observable.of([
     "",
-    "pending",
-    "paid",
-    "review",
+    ...Object.keys(payStatus)
   ]).map((statuses) =>
       statuses.map((status) =>
         <option key={status} value={status}>{displayStatus(status)}</option>
       )
+  );
+
+  const loading$ = state$.pluck("payment", "report", "loading");
+
+  const payButtonClasses$ = (
+    loading$
+      .map((loading) => (
+        classNames (
+          "btn btn-outline-secondary",
+          "with-loader",
+          {
+            loading
+          }
+        )
+      ))
+  );
+
+  const payButtonDisabled$ = (
+    loading$
+  );
+
+  const pendingButtonClasses$ = (
+    loading$
+      .map((loading) => (
+        classNames (
+          "btn btn-outline-secondary mr-2",
+          "with-loader",
+          {
+            loading
+          }
+        )
+      ))
+  );
+
+  const pendingButtonDisabled$ = (
+    loading$
   );
 
 	dispatch(fetchPayments());
@@ -173,7 +214,24 @@ function PaymentReport() {
                       <th scope="col">Status</th>
                       <th scope="col">Cantidad recibida</th>
                       <th scope="col">Cantidad a pagar</th>
-                      <th>&nbsp;</th>
+                      <th>
+                        <div className="row justify-content-center">
+                          <rxDom.button
+                            type="button"
+                            className={pendingButtonClasses$}
+                            disabled={pendingButtonDisabled$}
+                            onClick={() => dispatch(setPaymentPending())}
+                          >Pendiente</rxDom.button>
+
+                          <rxDom.button
+                            type="button"
+                            className={payButtonClasses$}
+                            disabled={payButtonDisabled$}
+                            onClick={() => dispatch(pay())}
+                          >Pagar</rxDom.button>
+
+                        </div>
+                      </th>
                   </tr>
                   </thead>
                   <rxDom.tbody>{

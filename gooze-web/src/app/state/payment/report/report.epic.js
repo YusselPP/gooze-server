@@ -1,15 +1,24 @@
+import moment from "moment-timezone";
 
 import {Observable} from "rxjs/Observable";
-import {ACTION_TYPES, fetchPayments, fetchPaymentsSuccess, fetchPaymentsFailure} from "./report.actions";
 import {combineEpics} from "redux-observable";
 
 import appConfig from "app/app.config";
 import {createLogger} from "app/services/log/log.service";
-import {errorMessage} from "utils";
+import {errorMessage, assert} from "utils";
 import {toastError} from "../../../ui/utils/ToastAlerts.service";
-import {assert} from "../../../../utils";
 
-import moment from "moment-timezone";
+import {
+  ACTION_TYPES,
+  payStatus,
+  fetchPayments,
+  fetchPaymentsSuccess,
+  fetchPaymentsFailure,
+  paySuccess,
+  payFailure,
+  setPaymentPendingSuccess,
+  setPaymentPendingFailure
+} from "./report.actions";
 
 const log = createLogger("state/payment/report/report.epic");
 
@@ -18,16 +27,22 @@ const {
 	FETCH_PAYMENTS,
   SET_FILTER_FROM_DATE,
   SET_FILTER_TO_DATE,
-  SET_FILTER_STATUS
+  SET_FILTER_STATUS,
+  PAY,
+  PAY_SUCCESS,
+  SET_PAYMENT_PENDING
 
 } = ACTION_TYPES;
 
 export default combineEpics(
 	performPaymentsFetch,
-  searchOnParametersChange
+  searchOnParametersChange,
+  pay,
+  setPaymentPending,
+  fetchPaymentsOnPaySuccess
 );
 
-function performPaymentsFetch(action$, store) {
+function performPaymentsFetch(action$) {
 	return (
 		action$
 			.ofType(FETCH_PAYMENTS)
@@ -76,7 +91,8 @@ function performPaymentsFetch(action$, store) {
                             goozeTaxAmount,
                             toUser,
                             toUserPayment,
-                            paypalAccount
+                            paypalAccount,
+                            paidAmount
                           } = payment;
 
                           const grossAmount = (+amount) || 0;
@@ -92,7 +108,10 @@ function performPaymentsFetch(action$, store) {
                               netAmount: (+netAmount) || 0,
                               clientTaxAmount: (+clientTaxAmount) || 0,
                               goozeTaxAmount: (+goozeTaxAmount) || 0,
-                              paypalFee
+                              paypalFee,
+
+                              isSelected: false,
+                              paidAmount: (+paidAmount) || (+netAmount) || 0
                           }
                       })
                   ))
@@ -124,7 +143,7 @@ function performPaymentsFetch(action$, store) {
                       const {response} = err;
                       const error = assert.object(response) ? response.error : error;
 
-                      const msg = `Can't access payments: ${errorMessage(error)}`;
+                      const msg = `Can't access payments report: ${errorMessage(error)}`;
 
                       log.error(msg, error);
                       toastError(msg);
@@ -142,6 +161,163 @@ function performPaymentsFetch(action$, store) {
 
 			})
 	);
+}
+
+function pay(action$, store) {
+  return (
+    action$
+      .ofType(PAY)
+      .switchMap(function () {
+
+        try {
+          const {payment} = store.getState();
+          const {report} = payment;
+          const {results} = report;
+          const {payments} = results;
+
+          const paymentsArray = (
+            Object.keys(payments)
+              .map((key) => (
+                payments[key]
+              ))
+              .reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
+          );
+
+          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected);
+
+          if (selectedPayments.length === 0) {
+            return Observable.of(paySuccess());
+          }
+
+          // TODO: SET on server Admin permisions to acces this method
+          return (
+            Observable
+              .ajax({
+                url: `${appConfig.apiPath}/UserTransactions/pay`,
+                method: "POST",
+                responseType: "json",
+                headers: {
+                  "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                  "Content-Type": "application/json"
+                },
+                body: {
+                  payments: selectedPayments.map((payment) => {
+                    const {id, paidAmount} = payment;
+                    return {id, paidAmount};
+                  })
+                }
+              })
+              .mapTo(paySuccess())
+              .catch(function (err) {
+
+                const {response} = err;
+                const error = assert.object(response) ? response.error : error;
+
+                const msg = errorMessage(error);
+
+                log.error(msg, error);
+                toastError(msg);
+
+                return Observable.of(payFailure({error}));
+              })
+
+          );
+
+        } catch (error) {
+
+          const msg = errorMessage(error);
+          log.error(msg, error);
+          toastError(msg);
+
+          return Observable.of(
+            payFailure({error})
+          );
+        }
+
+      })
+  );
+}
+
+function setPaymentPending(action$, store) {
+  return (
+    action$
+      .ofType(SET_PAYMENT_PENDING)
+      .switchMap(function () {
+
+        try {
+          const {payment} = store.getState();
+          const {report} = payment;
+          const {results} = report;
+          const {payments} = results;
+
+          const paymentsArray = (
+            Object.keys(payments)
+              .map((key) => (
+                payments[key]
+              ))
+              .reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
+          );
+
+          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected);
+
+          if (selectedPayments.length === 0) {
+            return Observable.of(setPaymentPendingSuccess());
+          }
+
+          // TODO: SET on server Admin permisions to acces this method
+          return (
+            Observable
+              .ajax({
+                url: `${appConfig.apiPath}/UserTransactions/updateMany`,
+                method: "POST",
+                responseType: "json",
+                headers: {
+                  "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                  "Content-Type": "application/json"
+                },
+                body: {
+                  transactions: selectedPayments.map((payment) => {
+                    const {id} = payment;
+                    return {id, goozeStatus: payStatus.pending};
+                  })
+                }
+              })
+              .mapTo(setPaymentPendingSuccess())
+              .catch(function (err) {
+
+                const {response} = err;
+                const error = assert.object(response) ? response.error : error;
+
+                const msg = errorMessage(error);
+
+                log.error(msg, error);
+                toastError(msg);
+
+                return Observable.of(setPaymentPendingFailure({error}));
+              })
+
+          );
+
+        } catch (error) {
+
+          const msg = errorMessage(error);
+          log.error(msg, error);
+          toastError(msg);
+
+          return Observable.of(
+            setPaymentPendingFailure({error})
+          );
+        }
+
+      })
+  );
+}
+
+function fetchPaymentsOnPaySuccess(action$) {
+  return (
+    action$.ofType(PAY_SUCCESS, SET_PAYMENT_PENDING)
+      .mapTo(fetchPayments())
+  );
 }
 
 function searchOnParametersChange(action$, store) {
