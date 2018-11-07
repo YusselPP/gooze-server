@@ -16,6 +16,9 @@
       "required": true,
       "default": "0"
     },
+    "paidAmount": {
+      "type": "string"
+    },
     "netAmount": {
       "type": "string",
       "required": true,

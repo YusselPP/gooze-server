@@ -183,7 +183,7 @@ function pay(action$, store) {
               .reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
           );
 
-          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected);
+          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected && payment.goozeStatus !== payStatus.paid);
 
           if (selectedPayments.length === 0) {
             return Observable.of(paySuccess());
@@ -258,7 +258,7 @@ function setPaymentPending(action$, store) {
               .reduce((result, paymentGroup) => [...result, ...paymentGroup.payments], [])
           );
 
-          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected);
+          const selectedPayments = paymentsArray.filter((payment) => payment.isSelected && payment.goozeStatus !== payStatus.pending);
 
           if (selectedPayments.length === 0) {
             return Observable.of(setPaymentPendingSuccess());
@@ -313,10 +313,10 @@ function setPaymentPending(action$, store) {
   );
 }
 
-function fetchPaymentsOnPaySuccess(action$) {
+function fetchPaymentsOnPaySuccess(action$, store) {
   return (
     action$.ofType(PAY_SUCCESS, SET_PAYMENT_PENDING)
-      .mapTo(fetchPayments())
+      .map(createSearchAction(store))
   );
 }
 

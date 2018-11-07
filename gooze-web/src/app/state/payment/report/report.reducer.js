@@ -27,7 +27,8 @@ const defaultState = Object.freeze({
 		payments: Object.freeze({}),
 		error: undefined
 	}),
-  loading: false,
+  paying: false,
+  settingPending: false,
   error: undefined
 });
 
@@ -164,14 +165,14 @@ function report(state = defaultState, action = {}) {
     case PAY: {
       return {
         ...state,
-        loading: true
+        paying: true
       };
     }
 
     case PAY_SUCCESS: {
       return {
         ...state,
-        loading: false
+        paying: false
       };
     }
 
@@ -181,7 +182,7 @@ function report(state = defaultState, action = {}) {
 
       return {
         ...state,
-        loading: false,
+        paying: false,
         error
       };
     }
@@ -189,14 +190,14 @@ function report(state = defaultState, action = {}) {
     case SET_PAYMENT_PENDING: {
       return {
         ...state,
-        loading: true
+        settingPending: true
       };
     }
 
     case SET_PAYMENT_PENDING_SUCCESS: {
       return {
         ...state,
-        loading: false
+        settingPending: false
       };
     }
 
@@ -206,7 +207,7 @@ function report(state = defaultState, action = {}) {
 
       return {
         ...state,
-        loading: false,
+        settingPending: false,
         error
       };
     }

@@ -71,7 +71,7 @@ function PaymentReport() {
                           <td>${payment.netAmount.toFixed(2)}</td>
                           <td>
                             <div className="input-group">
-                              <input type="number" className="form-control" value={payment.paidAmount} disabled={payment.goozeStatus === payStatus.paid} onChange={(event) => dispatch(setPaymentAmount({payment, paidAmount: event.target.value}))}/>
+                              <input type="number" className="form-control" value={payment.paidAmount} min="0" disabled={payment.goozeStatus === payStatus.paid} onChange={(event) => dispatch(setPaymentAmount({payment, paidAmount: event.target.value}))}/>
                               <div className="input-group-append">
                                 <div className="input-group-text">
                                   <input type="checkbox" checked={payment.isSelected} onChange={() => dispatch(togglePaymentSelection({payment}))}/>
@@ -125,10 +125,11 @@ function PaymentReport() {
       )
   );
 
-  const loading$ = state$.pluck("payment", "report", "loading");
+  const paying$ = state$.pluck("payment", "report", "paying");
+  const settingPending$ = state$.pluck("payment", "report", "settingPending");
 
   const payButtonClasses$ = (
-    loading$
+    paying$
       .map((loading) => (
         classNames (
           "btn btn-outline-secondary",
@@ -141,11 +142,12 @@ function PaymentReport() {
   );
 
   const payButtonDisabled$ = (
-    loading$
+    paying$.combineLatest(settingPending$)
+      .map(([paying, settingPending]) => paying || settingPending)
   );
 
   const pendingButtonClasses$ = (
-    loading$
+    settingPending$
       .map((loading) => (
         classNames (
           "btn btn-outline-secondary mr-2",
@@ -158,7 +160,8 @@ function PaymentReport() {
   );
 
   const pendingButtonDisabled$ = (
-    loading$
+    paying$.combineLatest(settingPending$)
+      .map(([paying, settingPending]) => paying || settingPending)
   );
 
 	dispatch(fetchPayments());
