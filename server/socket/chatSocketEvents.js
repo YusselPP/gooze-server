@@ -47,7 +47,9 @@ module.exports = function addChatSocketEvents(socket, clients, app, channel) {
           throw error;
         }
 
-        // TODO: Validate request status that allows amount updates.
+        // TODO: Validations: only gooze can requestAmount, dateRequest.status == accepted.
+        // TODO: calc grossAmount
+        // TODO: Move amounts to another model that cannot be updated by an API
 
         return dateRequest.updateAttribute('amount', amount);
       })

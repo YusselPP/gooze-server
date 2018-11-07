@@ -249,7 +249,6 @@ module.exports = function(Payment) {
                 amount: transaction.amount,
                 clientTaxAmount: sale.clientTaxAmount,
                 goozeTaxAmount: sale.goozeTaxAmount,
-                netAmount: sale.netAmount,
                 status: transaction.status,
                 paymentMethod: 'paypal',
                 gatewayTransactionId: transaction.id,
@@ -264,6 +263,14 @@ module.exports = function(Payment) {
                  */
                 paypalAccount: transaction.paypalAccount
               };
+
+              let feeAmount = 0;
+
+              if (userTransaction.paypalAccount && userTransaction.paypalAccount.transactionFeeAmount > 0) {
+                feeAmount = userTransaction.paypalAccount.transactionFeeAmount;
+              }
+
+              userTransaction.netAmount = userTransaction.amount - userTransaction.goozeTaxAmount - userTransaction.clientTaxAmount - feeAmount;
 
               promise = (
                 UserTransaction.create(userTransaction)

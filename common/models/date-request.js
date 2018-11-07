@@ -662,7 +662,6 @@ module.exports = function(DateRequest) {
       amount: data.amount,
       clientTaxAmount: data.clientTaxAmount,
       goozeTaxAmount: data.goozeTaxAmount,
-      netAmount: data.netAmount,
       paymentMethodToken: data.paymentMethodToken,
       deviceData: data.deviceData, // PayPalService.deviceData,
       description: data.description, // "Recipient: \(dateRequest.recipient.username), DateRequest: \(dateRequest.id)",

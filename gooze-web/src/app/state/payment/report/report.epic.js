@@ -66,19 +66,21 @@ function performPaymentsFetch(action$, store) {
                   })
                   .map(({response}) => (
                       response.map(function (payment) {
-                          const clientTax = 0.06;
-                          const goozeTax = 0.06;
                           const {
                             id,
                             goozeStatus,
                             createdAt,
                             amount,
+                            netAmount,
+                            clientTaxAmount,
+                            goozeTaxAmount,
                             toUser,
-                            toUserPayment
+                            toUserPayment,
+                            paypalAccount
                           } = payment;
 
                           const grossAmount = (+amount) || 0;
-                          const netAmount = grossAmount / (1 + clientTax) * (1 - goozeTax);
+                          const paypalFee = paypalAccount && +paypalAccount.transactionFeeAmount || 0;
 
                           return {
                               id,
@@ -87,7 +89,10 @@ function performPaymentsFetch(action$, store) {
                               username: toUser && toUser.username,
                               paypalEmail: toUserPayment && toUserPayment.paypalEmail,
                               grossAmount,
-                              netAmount
+                              netAmount: (+netAmount) || 0,
+                              clientTaxAmount: (+clientTaxAmount) || 0,
+                              goozeTaxAmount: (+goozeTaxAmount) || 0,
+                              paypalFee
                           }
                       })
                   ))
