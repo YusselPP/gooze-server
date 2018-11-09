@@ -92,12 +92,10 @@ function performPaymentsFetch(action$) {
                             goozeTaxAmount,
                             toUser,
                             toUserPayment,
-                            paypalAccount,
                             paidAmount
                           } = payment;
 
                           const grossAmount = (+amount) || 0;
-                          const paypalFee = paypalAccount && +paypalAccount.transactionFeeAmount || 0;
 
                           return {
                               id,
@@ -109,7 +107,6 @@ function performPaymentsFetch(action$) {
                               netAmount: (+netAmount) || 0,
                               clientTaxAmount: (+clientTaxAmount) || 0,
                               goozeTaxAmount: (+goozeTaxAmount) || 0,
-                              paypalFee,
 
                               isSelected: false,
                               paidAmount: (+paidAmount) || (+netAmount) || 0

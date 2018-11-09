@@ -264,13 +264,7 @@ module.exports = function(Payment) {
                 paypalAccount: transaction.paypalAccount
               };
 
-              let feeAmount = 0;
-
-              if (userTransaction.paypalAccount && userTransaction.paypalAccount.transactionFeeAmount > 0) {
-                feeAmount = userTransaction.paypalAccount.transactionFeeAmount;
-              }
-
-              userTransaction.netAmount = userTransaction.amount - userTransaction.goozeTaxAmount - userTransaction.clientTaxAmount - feeAmount;
+              userTransaction.netAmount = userTransaction.amount - userTransaction.goozeTaxAmount - userTransaction.clientTaxAmount;
 
               promise = (
                 UserTransaction.create(userTransaction)
