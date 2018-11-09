@@ -122,7 +122,8 @@ function performPaymentsFetch(action$) {
                         result[payment.username] = {
                           payments: [payment],
                           grossAmount: payment.grossAmount,
-                          netAmount: payment.netAmount
+                          netAmount: payment.netAmount,
+                          paidAmount: payment.paidAmount
                         };
 
                       } else {
@@ -130,6 +131,7 @@ function performPaymentsFetch(action$) {
                         userPayments.payments.push(payment);
                         userPayments.grossAmount += payment.grossAmount;
                         userPayments.netAmount += payment.netAmount;
+                        userPayments.paidAmount += payment.paidAmount;
                       }
 
                       return result;

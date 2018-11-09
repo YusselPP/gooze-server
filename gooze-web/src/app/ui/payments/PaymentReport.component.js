@@ -59,7 +59,7 @@ function PaymentReport() {
       payments$
           .map((groupedPayments) => (
               groupedPayments.reduce((result, paymentGroup, i) => {
-                  const {payments, grossAmount, netAmount} = paymentGroup;
+                  const {payments, grossAmount, netAmount, paidAmount} = paymentGroup;
 
                   result = [...result, ...(payments.map((payment) => (
                       <tr key={payment.id}>
@@ -87,7 +87,7 @@ function PaymentReport() {
                           <td colSpan="4" className="text-right"><b>Subtotal:</b></td>
                           <td><b>${grossAmount.toFixed(2)}</b></td>
                           <td><b>${netAmount.toFixed(2)}</b></td>
-                          <td>&nbsp;</td>
+                          <td><b>${paidAmount.toFixed(2)}</b></td>
                       </tr>
                   );
 
