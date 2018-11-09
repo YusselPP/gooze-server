@@ -43,6 +43,16 @@
       "type": "boolean",
       "required": true,
       "default": false
+    },
+    "shownInSenderHistory": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "shownInRecipientHistory": {
+      "type": "boolean",
+      "required": true,
+      "default": true
     }
   },
   "scope": {
@@ -163,6 +173,12 @@
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "property": "find"
+    },
+    {
+      "principalType": "ROLE",
+      "principalId": "$authenticated",
+      "permission": "ALLOW",
+      "property": "updateAll"
     },
     {
       "principalType": "ROLE",
