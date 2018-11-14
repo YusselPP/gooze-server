@@ -1035,10 +1035,10 @@ module.exports = function(GoozeUser) {
             const dateRequestJson = dateRequest.toJSON();
             const {date} = dateRequestJson;
 
-            if (date && date.status !== GZEDate.constants.status.canceled) {
-              error = new Error('Only canceled dates can be reviewed');
+            if (date && date.status === GZEDate.constants.status.ended) {
+              error = new Error('Ended dates can\'t be reviewed');
               error.statusCode = 422;
-              error.code = 'REVIEW_TRANSACTION_DATE_CANCELED_STATUS_REQUIRED';
+              error.code = 'REVIEW_TRANSACTION_DATE_ENDED_STATUS';
               error.details = {
                 id: date.id,
                 status: date.status
