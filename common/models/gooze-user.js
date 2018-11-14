@@ -1006,25 +1006,108 @@ module.exports = function(GoozeUser) {
     returns: {root: true, type: 'boolean'}
   });
 
-  GoozeUser.sendEmail = function(mail, options, cb) {
+  GoozeUser.sendEmail = function(mail, dateRequest, options, cb) {
+    const GZEDate = GoozeUser.app.models.GZEDate;
+    const DateRequest = GoozeUser.app.models.DateRequest;
+    const UserTransaction = GoozeUser.app.models.UserTransaction;
     var error;
     var userId = options && options.accessToken && options.accessToken.userId;
 
-    debug(mail);
+    debug(mail, dateRequest);
 
-    GoozeUser.findById(userId)
+    let promise = Promise.resolve();
+
+    if (dateRequest && dateRequest.id) {
+      promise = (
+        DateRequest.findById(dateRequest.id)
+          .then(function(dateRequest) {
+            if (!dateRequest) {
+              error = new Error('Model not found');
+              error.statusCode = 404;
+              error.code = 'NOT_FOUND';
+              error.details = {
+                model: 'DateRequest',
+                id: dateRequest.id
+              };
+              throw error;
+            }
+
+            const dateRequestJson = dateRequest.toJSON();
+            const {date} = dateRequestJson;
+
+            if (date && date.status !== GZEDate.constants.status.canceled) {
+              error = new Error('Only canceled dates can be reviewed');
+              error.statusCode = 422;
+              error.code = 'REVIEW_TRANSACTION_DATE_CANCELED_STATUS_REQUIRED';
+              error.details = {
+                id: date.id,
+                status: date.status
+              };
+              throw error;
+            }
+
+            return UserTransaction.findOne({
+              where: {
+                dateRequestId: dateRequest.id
+              }
+            });
+          })
+          .then(function(userTransaction) {
+            if (!userTransaction) {
+              error = new Error('Model not found');
+              error.statusCode = 404;
+              error.code = 'MODEL_NOT_FOUND';
+              error.details = {
+                model: 'UserTransaction'
+              };
+              throw error;
+            }
+
+            if (userTransaction.goozeStatus === UserTransaction.constants.status.paid) {
+              error = new Error('Cannot review an already paid transaction');
+              error.statusCode = 422;
+              error.code = 'REVIEW_TRANSACTION_ALREADY_PAID';
+              error.details = {
+                id: userTransaction.id
+              };
+              throw error;
+            }
+
+            if (userTransaction.goozeStatus === UserTransaction.constants.status.review) {
+              error = new Error('Transaction is already being review');
+              error.statusCode = 422;
+              error.code = 'REVIEW_TRANSACTION_ALREADY_REVIEW';
+              error.details = {
+                id: userTransaction.id
+              };
+              throw error;
+            }
+
+            return userTransaction.updateAttributes({
+              goozeStatus: UserTransaction.constants.status.review
+            });
+          })
+      );
+    }
+
+    promise.then(function() {
+      return GoozeUser.findById(userId);
+    })
       .then(function(user) {
         if (!user) {
-          error = new Error();
+          error = new Error('Model not found');
           error.statusCode = 404;
-          error.message = 'User not found';
-          error.code = 'NOT_FOUND';
+          error.code = 'MODEL_NOT_FOUND';
+          error.details = {
+            model: 'GoozeUser',
+            id: userId
+          };
           throw error;
         }
 
         GoozeUser.app.models.Email.send({
           to: process.env.GMAIL_USER,
-          subject: user.username + ' - ' + user.email + ': ' + mail.mail.subject,
+          subject: `${user.username} - ${user.email}: ${mail.mail.subject} ${dateRequest ? `(${dateRequest.id})` : ''}`,
           text: mail.mail.text
         }, function(err) {
           if (!err) {
@@ -1049,6 +1132,7 @@ module.exports = function(GoozeUser) {
         required: true,
         http: {source: 'body'}
       },
+      {arg: 'dateRequest', type: 'object'},
       {arg: 'options', type: 'object', http: 'optionsFromRequest'}
     ]
   });

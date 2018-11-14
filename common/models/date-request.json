@@ -160,6 +160,11 @@
       "type": "belongsTo",
       "model": "GZEDate",
       "foreignKey": "dateId"
+    },
+    "transaction": {
+      "type": "hasOne",
+      "model": "UserTransaction",
+      "foreignKey": "dateRequestId"
     }
   },
   "acls": [
