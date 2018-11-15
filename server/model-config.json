@@ -99,6 +99,10 @@
     "dataSource": "mongoDs",
     "public": true
   },
+  "DateStatusHistory": {
+    "dataSource": "mongoDs",
+    "public": false
+  },
   "GZERateComment": {
     "dataSource": "mongoDs",
     "public": true

@@ -1073,7 +1073,7 @@ module.exports = function(GoozeUser) {
               throw error;
             }
 
-            if (userTransaction.goozeStatus === UserTransaction.constants.status.review) {
+            /* if (userTransaction.goozeStatus === UserTransaction.constants.status.review) {
               error = new Error('Transaction is already being review');
               error.statusCode = 422;
               error.code = 'REVIEW_TRANSACTION_ALREADY_REVIEW';
@@ -1081,7 +1081,7 @@ module.exports = function(GoozeUser) {
                 id: userTransaction.id
               };
               throw error;
-            }
+            } */
 
             return userTransaction.updateAttributes({
               goozeStatus: UserTransaction.constants.status.review
@@ -1107,8 +1107,8 @@ module.exports = function(GoozeUser) {
 
         GoozeUser.app.models.Email.send({
           to: process.env.GMAIL_USER,
-          subject: `${user.username} - ${user.email}: ${mail.mail.subject} ${dateRequest ? `(${dateRequest.id})` : ''}`,
-          text: mail.mail.text
+          subject: `${user.username} - ${user.email}: ${mail.mail.subject}`,
+          text: `${dateRequest ? `id: (${dateRequest.id})` : ''} \n\n ${mail.mail.text}`
         }, function(err) {
           if (!err) {
             console.log('email sent!');

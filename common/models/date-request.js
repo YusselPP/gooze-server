@@ -249,6 +249,7 @@ module.exports = function(DateRequest) {
     var promise, notifiedUserId, starter;
     var userId = options && options.accessToken && options.accessToken.userId;
     var GZEDate = DateRequest.app.models.GZEDate;
+    var DateStatusHistory = DateRequest.app.models.DateStatusHistory;
     var GoozeUser = DateRequest.app.models.GoozeUser;
     var dateId = dateRequest.date && dateRequest.date.id;
     var senderId = dateRequest.sender && dateRequest.sender.id;
@@ -342,6 +343,17 @@ module.exports = function(DateRequest) {
             user: updatedUser
           };
 
+          return (
+            DateStatusHistory.create({
+              status: requestJson.date.status,
+              userId: userId,
+              dateRequestId: requestJson.id,
+              clientLocation: sender.currentLocation,
+              goozeLocation: recipient.currentLocation
+            }).then(() => result)
+          );
+        })
+        .then(function(result) {
           if (cb) {
             cb(null, result);
           } else {
@@ -382,6 +394,7 @@ module.exports = function(DateRequest) {
     var userId = options && options.accessToken && options.accessToken.userId;
     var GoozeUser = DateRequest.app.models.GoozeUser;
     var GZEDate = DateRequest.app.models.GZEDate;
+    var DateStatusHistory = DateRequest.app.models.DateStatusHistory;
 
     var dateId = dateRequest.date && dateRequest.date.id;
     var senderId = dateRequest.sender && dateRequest.sender.id;
@@ -492,6 +505,17 @@ module.exports = function(DateRequest) {
             user: updatedUser
           };
 
+          return (
+            DateStatusHistory.create({
+              status: requestJson.date.status,
+              userId: userId,
+              dateRequestId: requestJson.id,
+              clientLocation: sender.currentLocation,
+              goozeLocation: recipient.currentLocation
+            }).then(() => result)
+          );
+        })
+        .then(function(result) {
           if (cb) {
             cb(null, result);
           } else {
@@ -532,6 +556,7 @@ module.exports = function(DateRequest) {
     var userId = options && options.accessToken && options.accessToken.userId;
     var GoozeUser = DateRequest.app.models.GoozeUser;
     var GZEDate = DateRequest.app.models.GZEDate;
+    var DateStatusHistory = DateRequest.app.models.DateStatusHistory;
 
     var dateId = dateRequest.date && dateRequest.date.id;
     var senderId = dateRequest.sender && dateRequest.sender.id;
@@ -617,10 +642,22 @@ module.exports = function(DateRequest) {
             console.error('DateRequest.cancelDate - datesService not available yet');
           }
 
-          return {
+          let result = {
             dateRequest: updatedRequest,
             user: updatedUser
           };
+
+          let requestJson = updatedRequest.toJSON();
+
+          return (
+            DateStatusHistory.create({
+              status: requestJson.date.status,
+              userId: userId,
+              dateRequestId: requestJson.id,
+              clientLocation: sender.currentLocation,
+              goozeLocation: recipient.currentLocation
+            }).then(() => result)
+          );
         })
     );
 

@@ -1,0 +1,49 @@
+{
+  "name": "DateStatusHistory",
+  "base": "PersistedModel",
+  "idInjection": true,
+  "options": {
+    "validateUpsert": true
+  },
+  "mixins": {
+    "TimeStamp": {
+      "required": true
+    }
+  },
+  "properties": {
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "clientLocation": {
+      "type": "GeoPoint",
+      "required": true
+    },
+    "goozeLocation": {
+      "type": "GeoPoint",
+      "required": true
+    }
+  },
+  "validations": [],
+  "relations": {
+    "dateRequest": {
+      "type": "belongsTo",
+      "model": "DateRequest",
+      "foreignKey": "dateRequestId"
+    },
+    "user": {
+      "type": "belongsTo",
+      "model": "GoozeUser",
+      "foreignKey": "userId"
+    }
+  },
+  "acls": [
+    {
+      "principalType": "ROLE",
+      "principalId": "$everyone",
+      "permission": "DENY"
+    }
+  ],
+  "scopes": {},
+  "methods": {}
+}
