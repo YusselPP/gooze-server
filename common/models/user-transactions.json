@@ -97,25 +97,6 @@
       "principalId": "$authenticated",
       "permission": "ALLOW",
       "property": "find"
-    },
-    {
-      "principalType": "ROLE",
-      "principalId": "$everyone",
-      "permission": "ALLOW",
-      "accessType": "EXECUTE",
-      "property": "paymentReport"
-    },
-    {
-      "principalType": "ROLE",
-      "principalId": "$everyone",
-      "permission": "ALLOW",
-      "property": "pay"
-    },
-    {
-      "principalType": "ROLE",
-      "principalId": "$everyone",
-      "permission": "ALLOW",
-      "property": "updateMany"
     }
   ],
   "scopes": {},

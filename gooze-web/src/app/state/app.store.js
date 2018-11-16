@@ -6,6 +6,7 @@ import {router5Middleware} from "redux-router5";
 import appReducer from "./app.reducer";
 import appEpic from "./app.epic";
 import router from "../app.router";
+import {loadToken} from  "./auth/auth.actions";
 import {createLogger} from "../services/log/log.service";
 
 const log = createLogger("/app/state/app.store");
@@ -50,4 +51,4 @@ store.subscribe(
 );
 
 // attempt to login (recover current session)
-//store.dispatch(connect({}));
+store.dispatch(loadToken());

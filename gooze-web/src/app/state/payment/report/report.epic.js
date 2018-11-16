@@ -43,12 +43,13 @@ export default combineEpics(
   fetchPaymentsOnPaySuccess
 );
 
-function performPaymentsFetch(action$) {
+function performPaymentsFetch(action$, store) {
 	return (
 		action$
 			.ofType(FETCH_PAYMENTS)
 			.switchMap(function ({fromDate, toDate, status}) {
 				try {
+          const {auth} = store.getState();
           let fromParameter, toParameter;
           const from = moment(fromDate);
           const to = moment(toDate);
@@ -76,7 +77,7 @@ function performPaymentsFetch(action$) {
                       url: `${appConfig.apiPath}/UserTransactions/paymentReport?filter=${filterJsonString}`,
                       responseType: "json",
                       headers: {
-                        "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                        "Authorization": auth.token,
                         "Content-Type": "application/json"
                       }
                   })
@@ -170,7 +171,7 @@ function pay(action$, store) {
       .switchMap(function () {
 
         try {
-          const {payment} = store.getState();
+          const {payment, auth} = store.getState();
           const {report} = payment;
           const {results} = report;
           const {payments} = results;
@@ -189,7 +190,6 @@ function pay(action$, store) {
             return Observable.of(paySuccess());
           }
 
-          // TODO: SET on server Admin permisions to acces this method
           return (
             Observable
               .ajax({
@@ -197,7 +197,7 @@ function pay(action$, store) {
                 method: "POST",
                 responseType: "json",
                 headers: {
-                  "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                  "Authorization": auth.token,
                   "Content-Type": "application/json"
                 },
                 body: {
@@ -245,7 +245,7 @@ function setPaymentPending(action$, store) {
       .switchMap(function () {
 
         try {
-          const {payment} = store.getState();
+          const {payment, auth} = store.getState();
           const {report} = payment;
           const {results} = report;
           const {payments} = results;
@@ -264,7 +264,6 @@ function setPaymentPending(action$, store) {
             return Observable.of(setPaymentPendingSuccess());
           }
 
-          // TODO: SET on server Admin permisions to acces this method
           return (
             Observable
               .ajax({
@@ -272,7 +271,7 @@ function setPaymentPending(action$, store) {
                 method: "POST",
                 responseType: "json",
                 headers: {
-                  "Authorization": "AnRfWStyY4l7Lj8BwJJ7ZypRijxMsSUHDo594vccT9Lnc1ZfwsIWiesdQ4S4V8NC",
+                  "Authorization": auth.token,
                   "Content-Type": "application/json"
                 },
                 body: {
