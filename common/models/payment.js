@@ -1,6 +1,4 @@
 var debug = require('debug')('gooze:payment');
-var Conekta = require('../../server/payments/conekta/conekta-service');
-var paymentProvider = require('../../server/payments/PaymentService')(Conekta);
 var PayPalService = require('../../server/payments/paypal/paypal-service');
 var braintree = require('braintree');
 
