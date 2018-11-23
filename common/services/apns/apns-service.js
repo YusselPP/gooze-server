@@ -50,8 +50,9 @@ function send(provider, userId, notification) {
           return result;
         }, []);
 
+        debug('devicesToRemove:', devicesToRemove);
         if (devicesToRemove.length > 0) {
-          removeInactiveDeviceTokens(devicesToRemove);
+          return removeInactiveDeviceTokens(devicesToRemove);
         }
       });
     })
