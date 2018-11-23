@@ -44,7 +44,7 @@ function send(provider, userId, notification) {
         debug('failed tokens: ', result.failed);
         debug('removing inactive(HTTP error 410) tokens from db');
         var devicesToRemove = result.failed.reduce(function(result, failed) {
-          if (failed.error.statusCode === 410) {
+          if (failed.status === '410') {
             result.push(failed.device);
           }
           return result;
