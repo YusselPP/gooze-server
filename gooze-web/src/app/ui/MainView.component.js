@@ -5,6 +5,7 @@ import {rxDom, errorMessage} from "utils";
 import Toast from "./utils/Toast.component";
 import {createLogger} from "app/services/log/log.service";
 import PaymentReport from "./payments/PaymentReport.component";
+import SupportForm from "./support/SupportForm.component";
 import LoginView from "./auth/LoginView.component"
 import {logout} from "../state/auth/auth.actions";
 import classNames from "classnames";
@@ -25,6 +26,10 @@ function MainView() {
             .distinctUntilChanged()
             .combineLatest(isLogged$)
             .map(function ([routeName, isLogged]) {
+
+                if (routeName === "support") {
+                  return <SupportForm/>;
+                }
 
                 if (!isLogged) {
                     return <LoginView/>;

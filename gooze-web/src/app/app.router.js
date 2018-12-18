@@ -4,9 +4,10 @@ import browserPlugin from "router5/plugins/browser";
 
 const router = (
 	createRouter([
-        {name: "payment", path: "/payment", children: [
-        	{name: "report", path: "/report"}
-		]}
+    {name: "payment", path: "/payment", children: [
+      {name: "report", path: "/report"}
+		]},
+    {name: "support", path: "/support"}
 	], {
 		defaultRoute: "payment.report"
 	})

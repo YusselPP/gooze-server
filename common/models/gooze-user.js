@@ -1138,6 +1138,34 @@ module.exports = function(GoozeUser) {
     ]
   });
 
+  GoozeUser.support = function(email, subject, text, cb) {
+    debug(email, subject, text);
+
+    GoozeUser.app.models.Email.send({
+      from: email,
+      to: process.env.IONOS_USER,
+      subject: `Support - ${email}: ${subject}`,
+      text: `${text}`
+    }, function(err) {
+      if (!err) {
+        console.log('email sent!');
+      }
+      cb(err, 'Mensaje enviado');
+    });
+  };
+
+  GoozeUser.remoteMethod('support', {
+    http: {
+      verb: 'post'
+    },
+    accepts: [
+      {arg: 'email', type: 'string', required: true},
+      {arg: 'subject', type: 'string', required: true},
+      {arg: 'text', type: 'string', required: true}
+    ],
+    returns: {root: true, type: 'string'}
+  });
+
   GoozeUser.facebookLogin = function(token, cb) {
     debug(JSON.stringify(token));
 
