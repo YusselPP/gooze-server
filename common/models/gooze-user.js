@@ -1106,7 +1106,8 @@ module.exports = function(GoozeUser) {
         }
 
         GoozeUser.app.models.Email.send({
-          to: process.env.GMAIL_USER,
+          from: user.email,
+          to: process.env.IONOS_USER,
           subject: `${user.username} - ${user.email}: ${mail.mail.subject}`,
           text: `${dateRequest ? `id: (${dateRequest.id})` : ''} \n\n ${mail.mail.text}`
         }, function(err) {

@@ -158,6 +158,6 @@
     "public": true
   },
   "Email": {
-    "dataSource": "gmail"
+    "dataSource": "ionos"
   }
 }

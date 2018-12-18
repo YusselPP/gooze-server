@@ -33,5 +33,19 @@
         "pass": "${GMAIL_PWD}"
       }
     }]
+  },
+  "ionos": {
+    "name": "ionos",
+    "connector": "mail",
+    "transports": [{
+      "type": "smtp",
+      "host": "smtp.ionos.com",
+      "secure": true,
+      "port": 465,
+      "auth": {
+        "user": "${IONOS_USER}",
+        "pass": "${IONOS_PWD}"
+      }
+    }]
   }
 }
