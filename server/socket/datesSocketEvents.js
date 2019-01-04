@@ -109,7 +109,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
             .then(() => user)
         );
       })
-      .then(function(user) {
+      /* .then(function(user) {
         const userJson = user.toJSON();
 
         debug('dateRequestSent - payment: ', userJson.payment);
@@ -135,7 +135,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
               }
             })
         );
-      })
+      }) */
       .then(function() {
         return DateRequest.find({
           where: {
@@ -320,7 +320,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         );
       })
       .then(function([dateRequest, recipient]) {
-        const userJson = recipient.toJSON();
+        /* const userJson = recipient.toJSON();
 
         debug('dateRequestSent - payment: ', userJson.payment);
         // Payment method validation
@@ -330,7 +330,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
           error.code = 'PAYMENT_METHOD_REQUIRED';
           error.details = {};
           throw error;
-        }
+        } */
 
         if (
           dateRequest.status !== DateRequest.constants.status.sent &&
@@ -348,7 +348,7 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         }
         debug('acceptRequest - accepting date request: ' + JSON.stringify(dateRequest.toJSON()));
 
-        return (
+        /* return (
           Payment
             .findPaymentMethods(userJson.payment.paypalCustomerId)
             .then(function(paymentMethods) {
@@ -362,7 +362,9 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
 
               return dateRequest;
             })
-        );
+        ); */
+
+        return dateRequest;
       })
       .then(function(dateRequest) {
         return dateRequest.updateAttributes({
