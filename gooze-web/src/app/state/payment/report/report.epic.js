@@ -103,7 +103,7 @@ function performPaymentsFetch(action$, store) {
                               createdAt,
                               goozeStatus,
                               username: toUser && toUser.username,
-                              paypalEmail: toUserPayment && toUserPayment.paypalEmail,
+                              paypalEmail: toUser && toUser.payPalEmail,
                               grossAmount,
                               netAmount: (+netAmount) || 0,
                               clientTaxAmount: (+clientTaxAmount) || 0,
