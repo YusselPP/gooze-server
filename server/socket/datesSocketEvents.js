@@ -320,9 +320,22 @@ module.exports = function addDatesSocketEvents(socket, clients, app, channel) {
         );
       })
       .then(function([dateRequest, recipient]) {
+        // PayPal account validation (for receiving incomes)
+        const userJson = recipient.toJSON();
+
+        debug('acceptRequest - payPalEmail: ', userJson.payPalEmail);
+
+        if (!userJson.payPalEmail) {
+          error = new Error('A PayPal account is required');
+          error.statusCode = error.status = 422;
+          error.code = 'PAY_PAL_ACCOUNT_REQUIRED';
+          error.details = {};
+          throw error;
+        }
+
         /* const userJson = recipient.toJSON();
 
-        debug('dateRequestSent - payment: ', userJson.payment);
+        debug('acceptRequest - payment: ', userJson.payment);
         // Payment method validation
         if (!userJson.payment || !userJson.payment.paypalCustomerId) {
           error = new Error('A payment method is required');

@@ -17,6 +17,9 @@
       "type": "string",
       "required": true
     },
+    "payPalEmail": {
+      "type": "string"
+    },
     "registerCode": {
       "type": "string"
     },
