@@ -116,6 +116,13 @@ module.exports = function(GoozeUser) {
               result.push(prop);
             }
 
+            if (prop === 'photos' && Array.isArray(value)) {
+              const validPhotos = value.filter((photo) => !!photo.url);
+              if (validPhotos.length > 0 && validPhotos.length < 4) {
+                result.push(prop);
+              }
+            }
+
             return result;
           }, []);
 
@@ -124,6 +131,9 @@ module.exports = function(GoozeUser) {
             error = new Error('validation.profile.incomplete');
             error.statusCode = error.status = 422;
             error.code = 'USER_INCOMPLETE_PROFILE';
+            error.details = {
+              missingProperties: missingProperties
+            };
             throw error;
           }
 
