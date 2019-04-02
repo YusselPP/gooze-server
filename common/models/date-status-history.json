@@ -17,11 +17,11 @@
     },
     "clientLocation": {
       "type": "GeoPoint",
-      "required": true
+      "required": false
     },
     "goozeLocation": {
       "type": "GeoPoint",
-      "required": true
+      "required": false
     }
   },
   "validations": [],
