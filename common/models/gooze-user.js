@@ -1360,6 +1360,24 @@ module.exports = function(GoozeUser) {
     }
     next();
   });
+
+  GoozeUser.on('resetPasswordRequest', function(info) {
+    var url = process.env.WEB_HOST + '/reset-password?access_token=' + info.accessToken.id;
+    var html = (
+      '<p>Haz click en el siguiente enlace para cambiar tu contraseña:</p>' +
+      '<a href="' + url  + '">' + url + '</a>'
+    );
+
+    GoozeUser.app.models.Email.send({
+      to: info.email,
+      from: process.env.IONOS_USER,
+      subject: 'Restablecer contraseña',
+      html: html
+    }, function(err) {
+      if (err) return console.error('error sending password reset email');
+      debug('sending password reset email to:', info.email);
+    });
+  });
 };
 
 function findObjectWithProperty(object, key) {
