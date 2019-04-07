@@ -14,10 +14,6 @@ app.set('views', path.join(__dirname, 'views'));
 // configure body parser
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.use('/reset-password', loopback.token({
-  model: 'GoozeAccessToken'
-}));
-
 app.start = function() {
   // start the web server
   return app.listen(function() {

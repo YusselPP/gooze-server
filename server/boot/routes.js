@@ -1,9 +1,17 @@
+var loopback = require('loopback');
+var path = require('path');
 
 module.exports = function(app) {
+  var staticPath = app.get('staticPath');
+  var resetPassPath = path.join(staticPath, '/reset-password');
+
+  app.use(path.join(staticPath, '/reset-password'), loopback.token({
+    model: 'GoozeAccessToken'
+  }));
+
   // show password reset form
-  app.get('/reset-password', function(req, res, next) {
+  app.get(resetPassPath, function(req, res, next) {
     var apiRoot = app.get('restApiRoot');
-    var staticPath = app.get('staticPath');
 
     console.log(req, apiRoot);
 
@@ -12,12 +20,11 @@ module.exports = function(app) {
       errors: [],
       staticPath: staticPath,
       // redirectUrl: apiRoot + '/GoozeUsers/gzeResetPassword?access_token=' + req.accessToken.id
-      redirectUrl: '/reset-password?access_token=' + req.accessToken.id
+      redirectUrl: resetPassPath + '?access_token=' + req.accessToken.id
     });
   });
 
-  app.post('/reset-password', function(req, res, next) {
-    var staticPath = app.get('staticPath');
+  app.post(resetPassPath, function(req, res, next) {
     var GoozeUser = app.models.GoozeUser;
 
     console.log(req);
@@ -27,7 +34,7 @@ module.exports = function(app) {
       return res.status(422)
         .render('password-reset', {
           staticPath: staticPath,
-          redirectUrl: '/reset-password?access_token=' + req.accessToken.id,
+          redirectUrl: resetPassPath + '?access_token=' + req.accessToken.id,
           errors: ['La contraseña es un campo obligatorio']
         });
     }
@@ -39,7 +46,7 @@ module.exports = function(app) {
       return res.status(422)
         .render('password-reset', {
           staticPath: staticPath,
-          redirectUrl: '/reset-password?access_token=' + req.accessToken.id,
+          redirectUrl: resetPassPath + '?access_token=' + req.accessToken.id,
           errors: ['La contraseña y su confirmación no coinciden']
         });
     }
@@ -49,7 +56,7 @@ module.exports = function(app) {
         return res.status(err.statusCode)
           .render('password-reset', {
             staticPath: staticPath,
-            redirectUrl: '/reset-password?access_token=' + req.accessToken.id,
+            redirectUrl: resetPassPath + '?access_token=' + req.accessToken.id,
             errors: [err.message]
           });
       }
