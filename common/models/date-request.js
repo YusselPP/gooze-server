@@ -710,6 +710,15 @@ module.exports = function(DateRequest) {
 
     debug(funcName, '-', data);
 
+    if (sale.amount < 500) {
+      error = new Error('The amount must be greater or equal than 500');
+      error.statusCode = error.status = 409;
+      error.code = 'MINIMUM_AMOUNT';
+
+      cb(error);
+      return;
+    }
+
     // TODO: Validations before creating the charge?
     // Check that the user doesn't have an ongoing date already
     Promise.all([
